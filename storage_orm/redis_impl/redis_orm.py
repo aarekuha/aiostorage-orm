@@ -3,6 +3,7 @@ import redis.asyncio as redis
 import redis.asyncio.client as client
 from typing import TypeVar
 
+from .redis_frame import RedisFrame
 from .redis_item import RedisItem
 from .redis_item import T as SubclassItemType
 from ..operation_result import OperationResult
@@ -17,6 +18,7 @@ class RedisORM(StorageORM):
     """ Работа с БД Redis через объектное представление """
     _pipe: client.Pipeline
     _client: redis.Redis
+    _frame: RedisFrame
 
     def __init__(
         self,
@@ -35,6 +37,13 @@ class RedisORM(StorageORM):
         self._pipe = self._client.pipeline()
         if not RedisItem._db_instance:
             RedisItem._set_global_instance(db_instance=self._client)
+
+        self._frame = RedisFrame(client=self._client)
+
+    @property
+    def frame(self) -> RedisFrame:
+        """ Подготовленный frame для работы со списками значений """
+        return self._frame
 
     async def save(self, item: RedisItem) -> OperationResult:
         """ Одиночная вставка """
