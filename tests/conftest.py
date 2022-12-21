@@ -1,8 +1,12 @@
 import pytest
 from typing import Union
+from pytest_mock_resources import create_redis_fixture
 
 from storage_orm import RedisItem
-from .redis_impl.mocked_redis import MockedRedis
+from storage_orm import RedisFrame
+
+
+test_redis = create_redis_fixture()
 
 
 @pytest.fixture
@@ -18,6 +22,8 @@ def test_item(test_input_dict: dict) -> RedisItem:
         class Meta:
             # Префикс записи в БД
             table = "param1.{param1}.param2.{param2}"
+            ttl = None
+            frame_size = 100
 
     return TestItem(**test_input_dict)
 
@@ -36,5 +42,5 @@ def test_input_dict() -> dict[str, Union[str, bytes, float, int]]:
 
 
 @pytest.fixture
-def mocked_redis() -> MockedRedis:
-    return MockedRedis()
+def test_frame(test_redis) -> RedisFrame:
+    return RedisFrame(client=test_redis)

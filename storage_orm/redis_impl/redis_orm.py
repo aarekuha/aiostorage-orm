@@ -1,6 +1,6 @@
-import logging
 import redis.asyncio as redis
-import redis.asyncio.client as client
+import logging
+from typing import Union
 from typing import TypeVar
 
 from .redis_frame import RedisFrame
@@ -16,14 +16,14 @@ ChildItem = TypeVar('ChildItem', bound=RedisItem)
 
 class RedisORM(StorageORM):
     """ Работа с БД Redis через объектное представление """
-    _pipe: client.Pipeline
+    _pipe: redis.client.Pipeline
     _client: redis.Redis
     _frame: RedisFrame
 
     def __init__(
         self,
-        client: redis.Redis = None,
-        host: str = None,
+        client: Union[redis.Redis, None] = None,
+        host: Union[str, None] = None,
         port: int = 6379,
         db: int = 0,
     ) -> None:
@@ -32,7 +32,7 @@ class RedisORM(StorageORM):
         elif host:
             self._client = redis.Redis(host=host, port=port, db=db)
         else:
-            raise Exception(f"StorageORM-init must contains redis_client or host values...")
+            raise Exception("StorageORM-init must contains redis_client or host values...")
 
         self._pipe = self._client.pipeline()
         if not RedisItem._db_instance:
@@ -49,17 +49,17 @@ class RedisORM(StorageORM):
         """ Одиночная вставка """
         return await item.save()
 
-    async def bulk_create(self, items: list[SubclassItemType]) -> OperationResult:
+    def bulk_create(self, items: list[SubclassItemType]) -> OperationResult:
         """ Групповая вставка """
         try:
-            if hasattr(items[0].Meta, "ttl") and items[0].Meta.ttl:
+            if hasattr(items[0], "_ttl") and items[0]._ttl:
                 for redis_item in items:
                     for key, value in redis_item.mapping.items():
-                        await self._pipe.set(name=key, value=value, ex=redis_item.Meta.ttl)
+                        self._pipe.set(name=key, value=value, ex=redis_item._ttl)
             else:
                 for redis_item in items:
-                    await self._pipe.mset(mapping=redis_item.mapping)
-            await self._pipe.execute()
+                    self._pipe.mset(mapping=redis_item.mapping)
+            self._pipe.execute()
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:
             self._on_error_actions(exception=exception)
@@ -68,14 +68,14 @@ class RedisORM(StorageORM):
                 message=str(exception),
             )
 
-    async def bulk_delete(self, items: list[ChildItem]) -> OperationResult:
+    def bulk_delete(self, items: list[ChildItem]) -> OperationResult:
         """
             Удаление списка элементов
         """
         try:
             for redis_item in items:
-                await self._pipe.delete(*[key for key in redis_item.mapping.keys()])
-            await self._pipe.execute()
+                self._pipe.delete(*[key for key in redis_item.mapping.keys()])
+            self._pipe.execute()
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:
             self._on_error_actions(exception=exception)
@@ -84,11 +84,11 @@ class RedisORM(StorageORM):
                 message=str(exception),
             )
 
-    async def delete(self, item: RedisItem) -> OperationResult:
+    def delete(self, item: RedisItem) -> OperationResult:
         """
             Удаление одного элемента
         """
-        return await item.delete()
+        return item.delete()
 
     def _on_error_actions(self, exception: Exception) -> None:
         """

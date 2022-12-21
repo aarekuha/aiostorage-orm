@@ -1,9 +1,11 @@
 from __future__ import annotations
-import abc
-from typing import Any
+from abc import ABCMeta, abstractmethod
+from typing import Any, Type, Union
+
+from storage_orm.operation_result import OperationResult
 
 
-class StorageItem(metaclass=abc.ABCMeta):
+class StorageItem(metaclass=ABCMeta):
     """
         Базовая модель для объекта БД
         - Для создания модели на основе текущей, необходимо определить класс
@@ -18,8 +20,9 @@ class StorageItem(metaclass=abc.ABCMeta):
                     ttl = 3600  # sec, default None
     """
 
-    @abc.abstractclassmethod
-    async def get(cls, _item: StorageItem = None, **kwargs) -> StorageItem:
+    @classmethod
+    @abstractmethod
+    def get(cls, _item, **kwargs) -> Union[StorageItem, None]:
         """
             Получение одного объекта по выбранному фильтру
 
@@ -28,8 +31,9 @@ class StorageItem(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    @abc.abstractclassmethod
-    async def filter(cls, _items: list[StorageItem] = None, **kwargs) -> list[StorageItem]:
+    @classmethod
+    @abstractmethod
+    def filter(cls, _items, **kwargs) -> list:
         """
             Получение объектов по фильтру переданных аргументов, например:
 
@@ -38,13 +42,21 @@ class StorageItem(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    @abc.abstractclassmethod
-    async def using(cls, db_instance: Any) -> StorageItem:
+    @classmethod
+    @abstractmethod
+    def using(cls, db_instance) -> StorageItem:
         """
             Выполнение операций с БД путём direct-указания используемого
             подключения, например:
 
                 another_client: redis.Redis = redis.Redis(host="8.8.8.8", db=12)
                 StorageItem.using(db_instance=another_client).get(subsystem_id=10)
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def save(self) -> OperationResult:
+        """
+            Одиночная вставка
         """
         raise NotImplementedError
