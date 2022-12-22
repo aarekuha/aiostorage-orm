@@ -49,7 +49,7 @@ class RedisORM(StorageORM):
         """ Одиночная вставка """
         return await item.save()
 
-    def bulk_create(self, items: list[SubclassItemType]) -> OperationResult:
+    async def bulk_create(self, items: list[SubclassItemType]) -> OperationResult:
         """ Групповая вставка """
         try:
             if hasattr(items[0], "_ttl") and items[0]._ttl:
@@ -59,7 +59,7 @@ class RedisORM(StorageORM):
             else:
                 for redis_item in items:
                     self._pipe.mset(mapping=redis_item.mapping)
-            self._pipe.execute()
+            await self._pipe.execute()
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:
             self._on_error_actions(exception=exception)
@@ -68,14 +68,14 @@ class RedisORM(StorageORM):
                 message=str(exception),
             )
 
-    def bulk_delete(self, items: list[ChildItem]) -> OperationResult:
+    async def bulk_delete(self, items: list[ChildItem]) -> OperationResult:
         """
             Удаление списка элементов
         """
         try:
             for redis_item in items:
                 self._pipe.delete(*[key for key in redis_item.mapping.keys()])
-            self._pipe.execute()
+            await self._pipe.execute()
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:
             self._on_error_actions(exception=exception)
@@ -84,11 +84,11 @@ class RedisORM(StorageORM):
                 message=str(exception),
             )
 
-    def delete(self, item: RedisItem) -> OperationResult:
+    async def delete(self, item: RedisItem) -> OperationResult:
         """
             Удаление одного элемента
         """
-        return item.delete()
+        return await item.delete()
 
     def _on_error_actions(self, exception: Exception) -> None:
         """

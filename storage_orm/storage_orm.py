@@ -24,15 +24,15 @@ class StorageORM(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def bulk_create(self, items: list) -> OperationResult:
+    async def bulk_create(self, items: list) -> OperationResult:
         raise NotImplementedError
 
     @abstractmethod
-    def bulk_delete(self, items: list) -> OperationResult:
+    async def bulk_delete(self, items: list) -> OperationResult:
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, item) -> OperationResult:
+    async def delete(self, item) -> OperationResult:
         raise NotImplementedError
 
     @abstractproperty

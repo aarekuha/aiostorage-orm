@@ -135,14 +135,14 @@ class RedisItem(StorageItem):
         return True
 
     @classmethod
-    def get(cls: Type[T], _item: Union[T, None] = None, **kwargs) -> Union[T, None]:
+    async def get(cls: Type[T], _item: Union[T, None] = None, **kwargs) -> Union[T, None]:
         """
             Получение одного объекта по выбранному фильтру
 
                 StorageItem.get(subsystem_id=10, tag_id=55)
                 StorageItem.get(_item=StorageItem(subsystem_id=10))
         """
-        if not cls._db_instance or not cls._is_connected(db_instance=cls._db_instance):
+        if not cls._db_instance or not await cls._is_connected(db_instance=cls._db_instance):
             raise Exception("Redis database not connected...")
         if len(kwargs) and _item:
             raise Exception(f"{cls.__name__}.get() has _item and kwargs. It's not possible.")
@@ -163,7 +163,7 @@ class RedisItem(StorageItem):
                     f"{cls.__name__} not enough params to get method..."
                 )
         keys: list[bytes] = cls._get_keys_list(prefix=filter)
-        values: list[bytes] = cast(list[bytes], cls._db_instance.mget(keys))
+        values: list[bytes] = cast(list[bytes], await cls._db_instance.mget(keys))
         if not [v for v in values if v]:
             return None
         finded_objects: list[T] = cls._objects_from_db_items(items=dict(zip(keys, values)))
@@ -171,14 +171,14 @@ class RedisItem(StorageItem):
         return result
 
     @classmethod
-    def filter(cls: Type[T], _items: Union[list[T], None] = None, **kwargs) -> list[T]:
+    async def filter(cls: Type[T], _items: Union[list[T], None] = None, **kwargs) -> list[T]:
         """
             Получение объектов по фильтру переданных аргументов, например:
 
                 StorageItem.filter(subsystem_id=10, tag_id=55)
                 StorageItem.filter(_items=[StorageItem(subsystem_id=10), ...])
         """
-        if not cls._db_instance or not cls._is_connected(db_instance=cls._db_instance):
+        if not cls._db_instance or not await cls._is_connected(db_instance=cls._db_instance):
             raise Exception("Redis database not connected...")
         if not len(kwargs) and not _items:
             raise Exception(f"{cls.__name__}.filter() has empty filter. OOM possible.")
@@ -197,13 +197,13 @@ class RedisItem(StorageItem):
                 keys_list: list[bytes] = cls._get_keys_list(prefix=filter)
                 if [key for key in keys_list if "*" in str(key)]:
                     # Если не передан один из параметров и нужен поиск по ключам
-                    keys += cls._db_instance.keys(pattern=filter + ".*")
+                    keys += await cls._db_instance.keys(pattern=filter + ".*")
                 else:
                     # Если все параметры присутствуют, то можно использовать только
                     #   имена атрибутов
                     keys += keys_list
 
-        values: list[bytes] = cast(list[bytes], cls._db_instance.mget(keys))
+        values: list[bytes] = cast(list[bytes], await cls._db_instance.mget(keys))
         # Очистка пустых значений полученных данных
         if not [v for v in values if v]:
             return []
@@ -383,14 +383,14 @@ class RedisItem(StorageItem):
                 message=str(exception),
             )
 
-    def delete(self) -> OperationResult:
+    async def delete(self) -> OperationResult:
         """
             Удаление одного элемента
         """
-        if not self._db_instance or not self._is_connected(db_instance=self._db_instance):
+        if not self._db_instance or not await self._is_connected(db_instance=self._db_instance):
             raise Exception("Redis database not connected...")
         try:
-            self._db_instance.delete(*[key for key in self.mapping.keys()])
+            await self._db_instance.delete(*[key for key in self.mapping.keys()])
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:
             return OperationResult(

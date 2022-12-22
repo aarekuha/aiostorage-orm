@@ -27,13 +27,13 @@ async def main():
     result_of_operation: OperationResult = await example_item.save()
     print(result_of_operation)
 
-    # # Получение одной записи
-    # getted_item: Union[ExampleItem, None] = ExampleItem.get(subsystem_id=3, tag_id=15)
-    # print(f"{getted_item=}")
-    #
-    # # Получение всех записей по фильтру
-    # getted_items: list[ExampleItem] = ExampleItem.filter(subsystem_id=37, tag_id=15)
-    # print(f"{getted_items=}")
+    # Получение одной записи
+    getted_item: Union[ExampleItem, None] = await ExampleItem.get(subsystem_id=3, tag_id=15)
+    print(f"{getted_item=}")
+
+    # Получение всех записей по фильтру
+    getted_items: list[ExampleItem] = await ExampleItem.filter(subsystem_id=3)
+    print(f"{getted_items=}")
 
 
 asyncio.run(main())

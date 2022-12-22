@@ -22,7 +22,7 @@ class StorageItem(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def get(cls, _item, **kwargs) -> Union[StorageItem, None]:
+    async def get(cls, _item, **kwargs) -> Union[StorageItem, None]:
         """
             Получение одного объекта по выбранному фильтру
 
@@ -33,7 +33,7 @@ class StorageItem(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def filter(cls, _items, **kwargs) -> list:
+    async def filter(cls, _items, **kwargs) -> list:
         """
             Получение объектов по фильтру переданных аргументов, например:
 
@@ -59,4 +59,21 @@ class StorageItem(metaclass=ABCMeta):
         """
             Одиночная вставка
         """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self) -> OperationResult:
+        """
+            Удаление одного элемента
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_ttl(self, new_ttl) -> None:
+        """ Установка настройки времени жизни объекта 'на лету' """
+        raise NotImplementedError
+
+    @abstractmethod
+    def set_frame_size(self, new_frame_size) -> None:
+        """ Установка настройки максимального размера frame'а 'на лету' """
         raise NotImplementedError
