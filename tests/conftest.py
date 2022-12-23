@@ -1,11 +1,14 @@
-import pytest
 from typing import Union
+
+import pytest
+import redis.asyncio
 from pytest_mock_resources import create_redis_fixture
+from pytest_mock_resources.fixture import redis as redis_module
 
 from storage_orm import RedisItem
 from storage_orm import RedisFrame
 
-
+redis_module.redis = redis.asyncio  # type: ignore
 test_redis = create_redis_fixture()
 
 
