@@ -4,6 +4,7 @@ import redis.asyncio as redis
 from pytest import MonkeyPatch
 
 from storage_orm import RedisItem
+from storage_orm import RedisFrame
 from storage_orm import MultipleGetParamsException
 from storage_orm import NotEnoughParamsException
 
