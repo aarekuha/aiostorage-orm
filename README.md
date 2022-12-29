@@ -1,15 +1,18 @@
-#### StorageORM (CyberPhysics)
-[![Upload pypi](https://github.com/CyberPhysics-Platform/storage-orm/actions/workflows/pypi_deploy.yml/badge.svg)](https://github.com/CyberPhysics-Platform/storage-orm/actions/workflows/pypi_deploy.yml)
-[![Linting & Pytest](https://github.com/CyberPhysics-Platform/storage-orm/actions/workflows/lint_and_test.yml/badge.svg)](https://github.com/CyberPhysics-Platform/storage-orm/actions/workflows/lint_and_test.yml)
+#### AioStorageORM (CyberPhysics)
+[![Upload pypi](https://github.com/CyberPhysics-Platform/aiostorage-orm/actions/workflows/pypi_deploy.yml/badge.svg)](https://github.com/CyberPhysics-Platform/aiostorage-orm/actions/workflows/pypi_deploy.yml)
+[![Linting & Pytest](https://github.com/CyberPhysics-Platform/aiostorage-orm/actions/workflows/lint_and_test.yml/badge.svg)](https://github.com/CyberPhysics-Platform/aiostorage-orm/actions/workflows/lint_and_test.yml)
 ##### Установка
 ```bash
-    pip install storage-orm
+    pip install aiostorage-orm
 ```
 ##### Зависимости
 - [redis-py](https://github.com/redis/redis-py)
+- [nest-asyncio]()
 ##### Базовый пример использования ([все примеры](examples/), [базовый пример](examples/redis_1_single.py))
 1. Импорт классов
     ```python
+        import redis.asyncio as redis
+
         from storage_orm import StorageORM
         from storage_orm import RedisORM
         from storage_orm import RedisItem
@@ -56,15 +59,15 @@
     1. Выполнить вставку можно несколькими способами
         1. Использовать метод save() созданного экземпляра
             ```python
-                operation_result: OperationResult = example_item.save()
+                operation_result: OperationResult = await example_item.save()
             ```
         1. Использовать метод save() StorageOrm
             ```python
-                operation_result: OperationResult = orm.save(item=example_item)
+                operation_result: OperationResult = await orm.save(item=example_item)
             ```
         1. Использовать **групповую** вставку записей ([пример групповой вставки](examples/redis_2_bulk_multiple.py))
             ```python
-                operation_result: OperationResult = orm.bulk_create(
+                operation_result: OperationResult = await orm.bulk_create(
                     items=[example_item1, example_item2]
                 )
             ```
@@ -76,7 +79,7 @@
         ```
         , например
         ```python
-            example_items: ExampleItem = exampleitem.get(subsystem_id=3, tag_id=15)
+            example_items: ExampleItem = await exampleitem.get(subsystem_id=3, tag_id=15)
         ```
 1. Использование нескольких подключений ([пример](examples/redis_3_using_multiple_connections.py))
     - для использования нескольких подключений необходимо в метод StorageItem.using(db_instance=...) передать
@@ -90,14 +93,14 @@
     - для поиска записей по параметру, находящемуся в списке значений, необходимо параметр дополнить суффиксом __in, в
       который необходимо передать список искомых значений
         ```python
-            getted_items: list[ExampleItem] = ExampleItem.filter(subsystem_id__in=[21, 23], tag_id=15)
+            getted_items: list[ExampleItem] = await ExampleItem.filter(subsystem_id__in=[21, 23], tag_id=15)
         ```
 1. Поиск по предварительно подготовленному объекту ([пример](examples/redis_5_find_by_object.py))
     - для поиска записи указанным образом, необходимо создать объект с параметрами, необходимыми для поиска и передать
       его в метод RedisORM.get
     ```python
         item: ExampleItem = ExampleItem(subsystem_id=1, tag_id=15)
-        item_by_object: ExampleItem | None = ExampleItem.get(_item=item)
+        item_by_object: ExampleItem | None = await ExampleItem.get(_item=item)
     ```
 1. Поиск по предварительно подготовленным объектам ([пример](examples/redis_5_find_by_object.py))
     - для поиска записи указанным образом, необходимо создать объекты с параметрами, необходимыми для поиска и передать
@@ -107,16 +110,16 @@
             ExampleItem(subsystem_id=1, tag_id=15),
             ExampleItem(subsystem_id=2, tag_id=16),
         ]
-        item_by_objects: list[ExampleItem] = ExampleItem.filter(_items=items)
+        item_by_objects: list[ExampleItem] = await ExampleItem.filter(_items=items)
     ```
 1. Удаление одного объекта ([пример](examples/redis_6_delete_item.py))
     ```python
         example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15)
-        result_of_operation: OperationResult = example_item.delete()
+        result_of_operation: OperationResult = await example_item.delete()
     ```
 1. Удаление нескольких объектов одновременно ([пример](examples/redis_6_delete_item.py))
     ```python
-        result_of_operation: OperationResult = orm.bulk_delete(items=example_items)
+        result_of_operation: OperationResult = await orm.bulk_delete(items=example_items)
     ```
 1. Добавление объектов с ограниченным временем жизни ([пример](examples/redis_7_ttl.py))
     ```python
@@ -133,7 +136,7 @@
                 ttl = 10
         ...
         example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=100, any_value=17.)
-        result_of_operation: OperationResult = example_item.save()
+        result_of_operation: OperationResult = await example_item.save()
         ...
         example_items: list[ExampleItem] = []
         for i in range(100):
@@ -146,7 +149,7 @@
                 any_value=random.random() * 10,
             )
             example_items.append(example_item)
-        result_of_operation: OperationResult = orm.bulk_create(items=example_items)
+        result_of_operation: OperationResult = await orm.bulk_create(items=example_items)
     ```
 1. Добавление одной записи во фрейм ([пример](examples/redis_8_frame.py))
     ```python
@@ -162,14 +165,14 @@
                 ttl = 10  # Время жизни объекта в базе данных
                 frame_size = 3  # Размер frame'а
         ...
-        result_of_operation: OperationResult = orm.frame.add(item_or_items=example_item)
+        result_of_operation: OperationResult = await orm.frame.add(item_or_items=example_item)
     ```
 1. Групповое добавление записей во фрейм ([пример](examples/redis_8_frame.py))
     * записи могут быть разнородными (должны являться наследником RedisItem, но при этом они могут быть определены
       различными друг от друга классами)
     ```python
         ...
-        result_of_operation: OperationResult = orm.frame.add(item_or_items=[example_item, example_item_2])
+        result_of_operation: OperationResult = await orm.frame.add(item_or_items=[example_item, example_item_2])
     ```
 1. Сбор данных из фрейма ([пример](examples/redis_8_frame.py))
     * данные из фрейма можно получить только списком (list[ExampleItem])
@@ -177,7 +180,7 @@
       get(ExampleItem(), 0, 0), самый последний добавленный get(ExampleItem(), -1, -1))
     ```python
         ...
-        result_of_operation: OperationResult = orm.frame.get(item=example_item)
+        result_of_operation: OperationResult = await orm.frame.get(item=example_item)
     ```
 ##### Запуск примеров
 ```bash
@@ -202,7 +205,7 @@
 
     # Пример добавления объектов с ограниченным временем жизни
     PYTHONPATH="${PYTHONPATH}:." python examples/redis_7_ttl.py
-
+    
     # Пример работы с frame'ами
     PYTHONPATH="${PYTHONPATH}:." python examples/redis_8_frame.py
 ```

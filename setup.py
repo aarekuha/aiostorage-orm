@@ -14,7 +14,7 @@ with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='storage_orm',
+    name='aiostorage_orm',
     version=version,
 
     author='aarekuha',
@@ -26,13 +26,13 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    url='https://github.com/CyberPhysics-Platform/storage-orm',
-    download_url='https://github.com/CyberPhysics-Platform/storage-orm/archive/refs/heads/master.zip',
+    url='https://github.com/CyberPhysics-Platform/aiostorage-orm',
+    download_url='https://github.com/CyberPhysics-Platform/aiostorage-orm/archive/refs/heads/master.zip',
 
     license='Apache License, Version 2.0',
 
     packages=['storage_orm', 'storage_orm.redis_impl'],
-    install_requires=['redis'],
+    install_requires=['redis', 'nest-asyncio'],
 
     python_requires='>=3.9',
 

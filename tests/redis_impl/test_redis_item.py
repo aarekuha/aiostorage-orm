@@ -36,13 +36,15 @@ async def test_filter_not_instance(test_item: RedisItem, test_input_dict: dict[s
 
 
 @pytest.mark.asyncio
-async def test_filter_oom_exclude(test_item: RedisItem, monkeypatch: MonkeyPatch) -> None:
+async def test_filter_oom_exclude(
+    test_redis: redis.Redis,
+    test_item: RedisItem,
+    monkeypatch: MonkeyPatch,
+) -> None:
     """ Для исключения ООМ должна быть проверка на запрос данных без фильтра """
     with monkeypatch.context() as patch:
         # Установить фейковое подключение, чтобы пройти проверку на его отсутствие
-        patch.setattr(RedisItem, "_db_instance", redis.Redis)
-        # Мок на пинг установленного подключения
-        patch.setattr(RedisItem._db_instance, "ping", lambda: True)
+        patch.setattr(RedisItem, "_db_instance", test_redis)
         with pytest.raises(Exception) as exception:
             await test_item.filter()
 
@@ -160,22 +162,25 @@ def test_objects_from_db_items(
 
 
 @pytest.mark.asyncio
-async def test_get_multiple_params_exception(monkeypatch: MonkeyPatch) -> None:
+async def test_get_multiple_params_exception(
+    test_redis: redis.Redis,
+    monkeypatch: MonkeyPatch,
+) -> None:
     """ Выброс исключения, во время использования метода get(), когда не найдено ни одной записи """
     with monkeypatch.context() as patch, pytest.raises(MultipleGetParamsException):
-        patch.setattr(RedisItem, "_db_instance", redis.Redis)
-        # Мок на пинг установленного подключения
-        patch.setattr(RedisItem._db_instance, "ping", lambda: True)
+        patch.setattr(RedisItem, "_db_instance", test_redis)
         await RedisItem.get(subsystem_id__in=[1, 2])
 
 
-def test_get_not_enough_params(monkeypatch: MonkeyPatch) -> None:
+@pytest.mark.asyncio
+async def test_get_not_enough_params(
+    test_redis: redis.Redis,
+    monkeypatch: MonkeyPatch,
+) -> None:
     """ Выброс исключения, во время использования метода get(), когда найдено несколько записей """
     with monkeypatch.context() as patch, pytest.raises(NotEnoughParamsException):
-        patch.setattr(RedisItem, "_db_instance", redis.Redis)
-        # Мок на пинг установленного подключения
-        patch.setattr(RedisItem._db_instance, "ping", lambda: True)
-        RedisItem.get()
+        patch.setattr(RedisItem, "_db_instance", test_redis)
+        await RedisItem.get()
 
 
 @pytest.mark.parametrize(

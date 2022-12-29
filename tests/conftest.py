@@ -1,15 +1,19 @@
 from typing import Union
+import asyncio
 
 import pytest
-import redis.asyncio
-from pytest_mock_resources import create_redis_fixture
-from pytest_mock_resources.fixture import redis as redis_module
+import redis.asyncio as redis
+from pytest_mock_resources import pmr_redis_config  # type: ignore
+from pytest_mock_resources import pmr_redis_container  # type: ignore
 
 from storage_orm import RedisItem
 from storage_orm import RedisFrame
 
-redis_module.redis = redis.asyncio  # type: ignore
-test_redis = create_redis_fixture()
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """ Получает event_loop и не закрывает его до окончания тестов """
+    yield asyncio.get_event_loop()
 
 
 @pytest.fixture
@@ -42,6 +46,15 @@ def test_input_dict() -> dict[str, Union[str, bytes, float, int]]:
         "attr3": 99.9,  # float
         "attr4": b"attr_value_4",  # bytes
     }
+
+
+@pytest.fixture
+def test_redis(pmr_redis_container, pmr_redis_config) -> redis.Redis:  # type: ignore
+    """ Создание асинхронного класса Redis и удаление всех имеющихся в редис записей """
+    db: redis.Redis = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port, db=0)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(db.flushdb())
+    return db
 
 
 @pytest.fixture
