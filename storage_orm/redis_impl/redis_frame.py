@@ -3,7 +3,7 @@ import logging
 import asyncio
 from typing import Any
 from typing import Union
-import nest_asyncio
+import nest_asyncio  # type:ignore
 import redis.asyncio as redis
 from redis.asyncio.client import Pipeline
 from redis.commands.core import AsyncScript
