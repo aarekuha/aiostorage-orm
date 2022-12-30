@@ -16,9 +16,10 @@ class ExampleItem(RedisItem):
         # Ключи указанные в префиксе обязательны для передачи в момент создания экземпляра
         table = "subsystem.{subsystem_id}.tag.{tag_id}"
 
-async def main() -> None:
+
+async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: StorageORM = RedisORM(host="localhost", port=8379)
+    orm: StorageORM = RedisORM(host="localhost", port=6379)
 
     # Создание трёх записей с последовательным subsystem_id
     items: list[ExampleItem] = []

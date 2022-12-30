@@ -1,10 +1,11 @@
-import asyncio
 import random
+import asyncio
 
 from storage_orm import StorageORM
 from storage_orm import RedisORM
 from storage_orm import RedisItem
 from storage_orm import OperationResult
+
 
 class ExampleItem(RedisItem):
     # Атрибуты объекта с указанием типа данных (в процессе сбора данных из БД приводится тип)
@@ -16,9 +17,10 @@ class ExampleItem(RedisItem):
         # Ключи указанные в префиксе обязательны для передачи в момент создания экземпляра
         table = "subsystem.{subsystem_id}.another_key.{another_key_value}.tag.{tag_id}"
 
-async def main() -> None:
+
+async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: StorageORM = RedisORM(host="localhost", port=8379)
+    orm: StorageORM = RedisORM(host="localhost", port=6379)
 
     # Создание нескольких записей
     # Подготовка данных
@@ -37,7 +39,7 @@ async def main() -> None:
     print(result_of_operation)
 
     # Получение записей
-    getted_items: list[ExampleItem] = await ExampleItem.filter(subsystem_id=1)
+    getted_items: list[ExampleItem] = await ExampleItem.filter(subsystem_id=9)
     print(f"{getted_items=}")
 
 

@@ -1,8 +1,19 @@
-import pytest
 from typing import Union
+import asyncio
+
+import pytest
+import redis.asyncio as redis
+from pytest_mock_resources import pmr_redis_config  # type: ignore
+from pytest_mock_resources import pmr_redis_container  # type: ignore
 
 from storage_orm import RedisItem
-from .redis_impl.mocked_redis import MockedRedis
+from storage_orm import RedisFrame
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """ Получает event_loop и не закрывает его до окончания тестов """
+    yield asyncio.get_event_loop()
 
 
 @pytest.fixture
@@ -18,6 +29,8 @@ def test_item(test_input_dict: dict) -> RedisItem:
         class Meta:
             # Префикс записи в БД
             table = "param1.{param1}.param2.{param2}"
+            ttl = None
+            frame_size = 100
 
     return TestItem(**test_input_dict)
 
@@ -36,5 +49,14 @@ def test_input_dict() -> dict[str, Union[str, bytes, float, int]]:
 
 
 @pytest.fixture
-def mocked_redis() -> MockedRedis:
-    return MockedRedis()
+def test_redis(pmr_redis_container, pmr_redis_config) -> redis.Redis:  # type: ignore
+    """ Создание асинхронного класса Redis и удаление всех имеющихся в редис записей """
+    db: redis.Redis = redis.Redis(host=pmr_redis_config.host, port=pmr_redis_config.port, db=0)
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(db.flushdb())
+    return db
+
+
+@pytest.fixture
+def test_frame(test_redis) -> RedisFrame:
+    return RedisFrame(client=test_redis)

@@ -32,7 +32,7 @@ setup(
     license='Apache License, Version 2.0',
 
     packages=['storage_orm', 'storage_orm.redis_impl'],
-    install_requires=['redis'],
+    install_requires=['redis', 'nest-asyncio'],
 
     python_requires='>=3.9',
 

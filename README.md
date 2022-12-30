@@ -7,6 +7,7 @@
 ```
 ##### Зависимости
 - [redis-py](https://github.com/redis/redis-py)
+- [nest-asyncio](https://github.com/erdewit/nest_asyncio)
 ##### Базовый пример использования ([все примеры](examples/), [базовый пример](examples/redis_1_single.py))
 1. Импорт классов
     ```python
@@ -86,7 +87,7 @@
         ```python
             redis_another: redis.Redis = redis.Redis(host="localhost", port=8379, db=17)
             ...
-            result_of_operation: OperationResult = example_item.using(db_instance=redis_another).save()
+            result_of_operation: OperationResult = await example_item.using(db_instance=redis_another).save()
         ```
 1. Поиск по списку значений ([пример](examples/redis_4_values_in_list.py))
     - для поиска записей по параметру, находящемуся в списке значений, необходимо параметр дополнить суффиксом __in, в
@@ -150,6 +151,37 @@
             example_items.append(example_item)
         result_of_operation: OperationResult = await orm.bulk_create(items=example_items)
     ```
+1. Добавление одной записи во фрейм ([пример](examples/redis_8_frame.py))
+    ```python
+        class ExampleItem(RedisItem):
+            # Атрибуты объекта с указанием типа данных (в процессе сбора данных из БД приводится тип)
+            date_time: int
+            any_value: str
+
+            class Meta:
+                # Системный префикс записи в Redis
+                # Ключи указанные в префиксе обязательны для передачи в момент создания экземпляра
+                table = "subsystem.{subsystem_id}.tag.{tag_id}"
+                ttl = 10  # Время жизни объекта в базе данных
+                frame_size = 3  # Размер frame'а
+        ...
+        result_of_operation: OperationResult = await orm.frame.add(item_or_items=example_item)
+    ```
+1. Групповое добавление записей во фрейм ([пример](examples/redis_8_frame.py))
+    * записи могут быть разнородными (должны являться наследником RedisItem, но при этом они могут быть определены
+      различными друг от друга классами)
+    ```python
+        ...
+        result_of_operation: OperationResult = await orm.frame.add(item_or_items=[example_item, example_item_2])
+    ```
+1. Сбор данных из фрейма ([пример](examples/redis_8_frame.py))
+    * данные из фрейма можно получить только списком (list[ExampleItem])
+    * получение данных из фрейма ограничивается агрументами start_index и end_index (включительно, т.е. самый старый элемент
+      get(ExampleItem(), 0, 0), самый последний добавленный get(ExampleItem(), -1, -1))
+    ```python
+        ...
+        result_of_operation: OperationResult = await orm.frame.get(item=example_item)
+    ```
 ##### Запуск примеров
 ```bash
     python -m venv venv
@@ -171,6 +203,12 @@
     # Пример поиска по переданному подготовленному экземпляру
     PYTHONPATH="${PYTHONPATH}:." python examples/redis_5_find_by_object.py
 
+    # Пример удаления объектов  
+    PYTHONPATH="${PYTHONPATH}:." python examples/redis_6_delete_item.py
+    
     # Пример добавления объектов с ограниченным временем жизни
     PYTHONPATH="${PYTHONPATH}:." python examples/redis_7_ttl.py
+    
+    # Пример работы с frame'ами
+    PYTHONPATH="${PYTHONPATH}:." python examples/redis_8_frame.py
 ```

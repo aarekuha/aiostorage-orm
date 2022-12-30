@@ -2,15 +2,19 @@ from __future__ import annotations
 import logging
 import re
 import copy
-import itertools
+
 import redis.asyncio as redis
-import redis.exceptions as exceptions
-from typing import Any
-from typing import cast
-from typing import Union
-from typing import Mapping
-from typing import Type
-from typing import TypeVar
+from redis.exceptions import ConnectionError
+import itertools
+from typing import (
+    Any,
+    cast,
+    Union,
+    Mapping,
+    Type,
+    TypeVar,
+    Callable
+)
 
 from ..storage_item import StorageItem
 from ..operation_result import OperationResult
@@ -34,16 +38,20 @@ class RedisItem(StorageItem):
     _keys_positions: dict[str, int]
     _params: Mapping[_Key, _Value]
     _db_instance: Union[redis.Redis, None] = None
+    _on_init_ltrim: Union[Callable[[RedisItem, ], None], None] = None
+    _frame_size: int = 0
+    _ttl: Union[int, None] = None
 
     class Meta:
-        table = ""  # Pattern имени записи, например, "subsystem.{subsystem_id}.tag.{tag_id}"
-        ttl = None  # Время жизни объекта в базе данных
+        table: str = ""  # Pattern имени записи, например, "subsystem.{subsystem_id}.tag.{tag_id}"
+        ttl: Union[int, None] = None  # Время жизни объекта в базе данных
+        frame_size: Union[int, None] = 100  # Максимальный размер frame'а
 
     def __init_subclass__(cls) -> None:
         cls._keys_positions = {
             index.replace("{", "").replace("}", ""): key
-                for key, index in enumerate(cls.Meta.table.split(KEYS_DELIMITER))
-                    if index.startswith("{") and index.endswith("}")
+            for key, index in enumerate(cls.Meta.table.split(KEYS_DELIMITER))
+            if index.startswith("{") and index.endswith("}")
         }
 
     @classmethod
@@ -66,17 +74,48 @@ class RedisItem(StorageItem):
 
         return result_kwargs
 
+    def set_ttl(self, new_ttl: int) -> None:
+        """ Установка настройки времени жизни объекта 'на лету' """
+        setattr(self, "_ttl", new_ttl)
+
+    def set_frame_size(self, new_frame_size: int = 0) -> None:
+        """ Установка настройки максимального размера frame'а 'на лету' """
+        meta_frame_size: int | None = self.Meta.frame_size if hasattr(self.Meta, "frame_size") else None
+        old_frame_size: int = self._frame_size or meta_frame_size or 0
+        # При одинаковых значениях ничего не делать
+        if old_frame_size == new_frame_size:
+            return
+        # Если передан пустой аргумент, нужно установить значение по умолчанию
+        if not new_frame_size and self.Meta.frame_size:
+            new_frame_size = self.Meta.frame_size
+        # Аргумент, который используется для дальнейшей проверки и работы
+        setattr(self, "_frame_size", new_frame_size)
+
+        # Проверка необходимости подрезки frame'а
+        if old_frame_size > new_frame_size:
+            # Подрезка фрейма в БД
+            if self._on_init_ltrim:
+                self._on_init_ltrim(self)
+
     def __init__(self, **kwargs) -> None:
+        # Установка атрибутов из конструктора
+        for config_key in ("ttl", "frame_size"):
+            if config_key in kwargs.keys():
+                setattr(self, f"_{config_key}", kwargs[config_key])
+                del kwargs[config_key]
         # Формирование полей модели из переданных дочернему классу аргументов
-        [self.__dict__.__setitem__(key, value) for key, value in kwargs.items()]
+        [self.__dict__.__setitem__(key, value) for key, value in kwargs.items()]  # type: ignore
         # Формирование изолированной среды с данными класса для дальнейшей работы с БД
         self._table = self.__class__.Meta.table.format(**kwargs)
         self._params = {
             key: kwargs.get(key, None)
-                for key in self.__class__.__annotations__
+            for key in self.__class__.__annotations__
         }
         # Перегрузка методов для экземпляра класса
         self.using = self.instance_using  # type: ignore
+        if self._on_init_ltrim:
+            self.set_frame_size()
+            self._on_init_ltrim(self)
 
     def __getattr__(self, attr_name: str):
         return object.__getattribute__(self, attr_name)
@@ -96,13 +135,13 @@ class RedisItem(StorageItem):
         """ Проверка наличия подключения к серверу """
         try:
             await db_instance.ping()  # type: ignore
-        except exceptions.ConnectionError:
+        except ConnectionError:
             return False
 
         return True
 
     @classmethod
-    async def get(cls: Type[T], _item: T = None, **kwargs) -> Union[T, None]:
+    async def get(cls: Type[T], _item: Union[T, None] = None, **kwargs) -> Union[T, None]:
         """
             Получение одного объекта по выбранному фильтру
 
@@ -138,7 +177,7 @@ class RedisItem(StorageItem):
         return result
 
     @classmethod
-    async def filter(cls: Type[T], _items: list[T] = None, **kwargs) -> list[T]:
+    async def filter(cls: Type[T], _items: Union[list[T], None] = None, **kwargs) -> list[T]:
         """
             Получение объектов по фильтру переданных аргументов, например:
 
@@ -186,7 +225,7 @@ class RedisItem(StorageItem):
         #   (уникальные ключи, без имён полей)
         tables: set[str] = {
             str(key).rsplit(KEYS_DELIMITER, 1)[0]
-                for key in items.keys()
+            for key in items.keys()
         }
         result_items: list[T] = []
         for table in tables:
@@ -255,7 +294,7 @@ class RedisItem(StorageItem):
             # Получить множество комбинаций расширенного словаря
             mixed_kwargs: list[dict] = list(
                 dict(zip(extend_kwargs.keys(), values))
-                    for values in itertools.product(*extend_kwargs.values())
+                for values in itertools.product(*extend_kwargs.values())
             )
             # Обогатить расширенные словари базовым
             result_kwargs = [mixed_item | basic_kwargs for mixed_item in mixed_kwargs]
@@ -277,7 +316,7 @@ class RedisItem(StorageItem):
         for prepared_kwargs in prepared_kwargs_list:
             for pattern in patterns:
                 clean_key: str = pattern.strip("{").strip("}")
-                if not clean_key in prepared_kwargs:
+                if clean_key not in prepared_kwargs:
                     table = table.replace(pattern, "*")
             # Заполнение паттерна поиска
             str_filters.append(table.format(**prepared_kwargs))
@@ -289,7 +328,7 @@ class RedisItem(StorageItem):
         """ Формирование ключей и значений для БД """
         return {
             KEYS_DELIMITER.join([self._table, str(key)]): value
-                for key, value in self._params.items()
+            for key, value in self._params.items()
         }
 
     def __repr__(self) -> str:
@@ -298,13 +337,13 @@ class RedisItem(StorageItem):
             f"{self._keys_positions=}, {self._params=})"
         )
 
-    def __eq__(self, other: Type[T]) -> bool:
+    def __eq__(self, other: Any) -> bool:
         if isinstance(other, self.__class__):
             return self._params == other._params and self._table == other._table
 
         return False
 
-    def instance_using(self: T, db_instance: redis.Redis = None) -> T:
+    def instance_using(self: T, db_instance: Union[redis.Redis, None] = None) -> T:
         """
             Выполнение операций с БД путём direct-указания используемого
             подключения, например:
@@ -319,7 +358,7 @@ class RedisItem(StorageItem):
         return copied_instance
 
     @classmethod
-    def using(cls: Type[T], db_instance: redis.Redis = None) -> T:
+    def using(cls: Type[T], db_instance: Union[redis.Redis, None] = None) -> T:
         """
             Выполнение операций с БД путём direct-указания используемого
             подключения, например:
@@ -341,7 +380,7 @@ class RedisItem(StorageItem):
             raise Exception("Redis database not connected...")
         try:
             for key, value in self.mapping.items():
-                expiration: Union[int, None] = self.Meta.ttl if hasattr(self.Meta, "ttl") else None
+                expiration: Union[int, None] = self._ttl if hasattr(self, "_ttl") else None
                 await self._db_instance.set(name=key, value=value, ex=expiration)
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:

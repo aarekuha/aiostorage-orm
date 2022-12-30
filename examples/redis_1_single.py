@@ -1,5 +1,5 @@
-import asyncio
 from typing import Union
+import asyncio
 
 from storage_orm import StorageORM
 from storage_orm import RedisORM
@@ -17,9 +17,10 @@ class ExampleItem(RedisItem):
         # Ключи указанные в префиксе обязательны для передачи в момент создания экземпляра
         table = "subsystem.{subsystem_id}.tag.{tag_id}"
 
-async def main() -> None:
+
+async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: StorageORM = RedisORM(host="localhost", port=8379)
+    RedisORM(host="localhost", port=6379)
 
     # Создание единичной записи
     example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=100, any_value=17.)
@@ -31,7 +32,7 @@ async def main() -> None:
     print(f"{getted_item=}")
 
     # Получение всех записей по фильтру
-    getted_items: list[ExampleItem] = await ExampleItem.filter(subsystem_id=37, tag_id=15)
+    getted_items: list[ExampleItem] = await ExampleItem.filter(subsystem_id=3)
     print(f"{getted_items=}")
 
 
