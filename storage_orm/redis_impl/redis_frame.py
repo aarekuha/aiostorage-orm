@@ -5,6 +5,7 @@ from typing import Any
 from typing import Union
 import nest_asyncio
 import redis.asyncio as redis
+from redis.asyncio.client import Pipeline
 from redis.commands.core import AsyncScript
 
 from .redis_item import RedisItem
@@ -37,7 +38,7 @@ class RedisFrame(StorageFrame):
     QUEUE_START_INDEX: int = 0
     QUEUE_END_INDEX: int = -1
 
-    _pipe: redis.client.Pipeline
+    _pipe: Pipeline
     _client: redis.Redis
     _queue_add: AsyncScript  # Хранимый скрипт Redis
 

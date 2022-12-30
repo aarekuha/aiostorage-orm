@@ -1,7 +1,9 @@
-import redis.asyncio as redis
 import logging
 from typing import Union
 from typing import TypeVar
+
+import redis.asyncio as redis
+from redis.asyncio.client import Pipeline
 
 from .redis_frame import RedisFrame
 from .redis_item import RedisItem
@@ -16,7 +18,7 @@ ChildItem = TypeVar('ChildItem', bound=RedisItem)
 
 class RedisORM(StorageORM):
     """ Работа с БД Redis через объектное представление """
-    _pipe: redis.client.Pipeline
+    _pipe: Pipeline
     _client: redis.Redis
     _frame: RedisFrame
 

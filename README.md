@@ -7,7 +7,7 @@
 ```
 ##### Зависимости
 - [redis-py](https://github.com/redis/redis-py)
-- [nest-asyncio]()
+- [nest-asyncio](https://github.com/erdewit/nest_asyncio)
 ##### Базовый пример использования ([все примеры](examples/), [базовый пример](examples/redis_1_single.py))
 1. Импорт классов
     ```python
@@ -87,7 +87,7 @@
         ```python
             redis_another: redis.Redis = redis.Redis(host="localhost", port=8379, db=17)
             ...
-            result_of_operation: OperationResult = example_item.using(db_instance=redis_another).save()
+            result_of_operation: OperationResult = await example_item.using(db_instance=redis_another).save()
         ```
 1. Поиск по списку значений ([пример](examples/redis_4_values_in_list.py))
     - для поиска записей по параметру, находящемуся в списке значений, необходимо параметр дополнить суффиксом __in, в
@@ -203,6 +203,9 @@
     # Пример поиска по переданному подготовленному экземпляру
     PYTHONPATH="${PYTHONPATH}:." python examples/redis_5_find_by_object.py
 
+    # Пример удаления объектов  
+    PYTHONPATH="${PYTHONPATH}:." python examples/redis_6_delete_item.py
+    
     # Пример добавления объектов с ограниченным временем жизни
     PYTHONPATH="${PYTHONPATH}:." python examples/redis_7_ttl.py
     
