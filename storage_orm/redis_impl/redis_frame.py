@@ -3,7 +3,6 @@ import logging
 import asyncio
 from typing import Any
 from typing import Union
-import nest_asyncio  # type:ignore
 import redis.asyncio as redis
 from redis.asyncio.client import Pipeline
 from redis.commands.core import AsyncScript
@@ -13,9 +12,6 @@ from .redis_item import T as SubclassItemType
 from ..operation_result import OperationResult
 from ..operation_result import OperationStatus
 from ..storage_frame import StorageFrame
-
-# Позволяет работать с вложенными циклами событий
-nest_asyncio.apply()
 
 
 class RedisFrame(StorageFrame):
@@ -163,14 +159,15 @@ class RedisFrame(StorageFrame):
 
     def ltrim_by_item(self, item: RedisItem) -> None:
         """ Форматирование(обрезка) длины очереди в соответствии с frame_size Item'а """
-        key: str = self._make_key(item=item)
-        # Вызываем асинхронные методы redis.Redis внутри синхронной функции ltrim_by_item
-        loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        total_items_count: int = loop.run_until_complete(self._client.llen(key))
-        # total_items_count: int = asyncio.run(self._client.llen(key))
-        queue_size: int = self._get_frame_size(item=item)
-        if total_items_count > queue_size:
-            loop.run_until_complete(self._client.ltrim(key, -queue_size, self.QUEUE_END_INDEX))
+        return
+        # key: str = self._make_key(item=item)
+        # # Вызываем асинхронные методы redis.Redis внутри синхронной функции ltrim_by_item
+        # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+        # total_items_count: int = loop.run_until_complete(self._client.llen(key))
+        # # total_items_count: int = asyncio.run(self._client.llen(key))
+        # queue_size: int = self._get_frame_size(item=item)
+        # if total_items_count > queue_size:
+        #     loop.run_until_complete(self._client.ltrim(key, -queue_size, self.QUEUE_END_INDEX))
 
     async def get(
         self,
