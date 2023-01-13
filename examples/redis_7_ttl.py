@@ -34,7 +34,6 @@ async def main():
     getted_item: Union[ExampleItem, None] = await ExampleItem.get(subsystem_id=3, tag_id=15)
     print(f"{getted_item=}")
 
-
     # Групповая вставка объектов с ограниченным временем жизни
     # Подготовка данных
     example_items: list[ExampleItem] = []

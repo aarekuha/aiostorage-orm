@@ -3,7 +3,6 @@ from typing import Union
 import asyncio
 
 from aiostorage_orm import AIORedisItem
-from aiostorage_orm import OperationResult
 
 
 class ExampleItem(AIORedisItem):
@@ -29,16 +28,18 @@ async def main():
     """ Запись в БД используя вызов save у экземпляра модели """
     # Redis #1
     example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=1, any_value=11.)
-    result_of_operation: OperationResult = await example_item.using(db_instance=redis_1).save()
+    await example_item.using(db_instance=redis_1).save()
     # Redis #2
     example_item = ExampleItem(subsystem_id=3, tag_id=15, date_time=2, any_value=22.)
-    result_of_operation = await example_item.using(db_instance=redis_2).save()
+    await example_item.using(db_instance=redis_2).save()
 
     """ Получение записей """
-    item_from_redis_1: Union[ExampleItem, None] = await ExampleItem.using(db_instance=redis_1).get(subsystem_id=3, tag_id=15)
+    item_from_redis_1: Union[ExampleItem, None]
+    item_from_redis_1 = await ExampleItem.using(db_instance=redis_1).get(subsystem_id=3, tag_id=15)
     print(f"{item_from_redis_1=}")
 
-    item_from_redis_2: list[ExampleItem] = await ExampleItem.using(db_instance=redis_2).filter(subsystem_id=3, tag_id=15)
+    item_from_redis_2: list[ExampleItem]
+    item_from_redis_2 = await ExampleItem.using(db_instance=redis_2).filter(subsystem_id=3, tag_id=15)
     print(f"{item_from_redis_2=}")
 
 

@@ -1,10 +1,8 @@
 import pytest
-import asyncio
 import redis.asyncio as redis
 from pytest import MonkeyPatch
 
 from aiostorage_orm import AIORedisItem
-from aiostorage_orm import AIORedisFrame
 from aiostorage_orm import MultipleGetParamsException
 from aiostorage_orm import NotEnoughParamsException
 

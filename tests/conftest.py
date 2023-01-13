@@ -3,8 +3,6 @@ import asyncio
 
 import pytest
 import redis.asyncio as redis
-from pytest_mock_resources import pmr_redis_config  # type: ignore
-from pytest_mock_resources import pmr_redis_container  # type: ignore
 
 from aiostorage_orm import AIORedisItem
 from aiostorage_orm import AIORedisFrame

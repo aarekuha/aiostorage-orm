@@ -38,7 +38,6 @@ async def main() -> None:
     print("Групповая вставка данных во frame")
     example_items: list[ExampleItem] = []
     for i in range(0, 10):
-        subsystem_id: int = i % 10
         example_item = ExampleItem(
             subsystem_id=1,
             tag_id=1,

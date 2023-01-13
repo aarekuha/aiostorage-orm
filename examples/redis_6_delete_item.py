@@ -4,7 +4,6 @@ import asyncio
 from aiostorage_orm import AIOStorageORM
 from aiostorage_orm import AIORedisORM
 from aiostorage_orm import AIORedisItem
-from aiostorage_orm import OperationResult
 
 
 class ExampleItem(AIORedisItem):
@@ -24,11 +23,11 @@ async def main():
 
     # Создание единичной записи
     example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=100, any_value=17.)
-    result_of_operation: OperationResult = await example_item.save()
+    await example_item.save()
     print(f"After save: {ExampleItem.get(subsystem_id=3, tag_id=15)=}")
 
     # Удаление единичной записи
-    result_of_operation = await example_item.delete()
+    await example_item.delete()
     print(f"After delete: {ExampleItem.get(subsystem_id=3, tag_id=15)=}")
 
     # Создание нескольких записей
@@ -44,12 +43,12 @@ async def main():
             any_value=random.random() * 10,
         )
         example_items.append(example_item)
-    result_of_operation = await orm.bulk_create(items=example_items)
+    await orm.bulk_create(items=example_items)
     print("After save:")
     for item in await ExampleItem.filter(_items=example_items):
         print(f"{item=}")
     # Удаление нескольких записей
-    result_of_operation = await orm.bulk_delete(items=example_items)
+    await orm.bulk_delete(items=example_items)
     print(f"After delete: {ExampleItem.filter(_items=example_items)=}")
 
 

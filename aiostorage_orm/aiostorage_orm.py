@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import Any, Union
 
-from .aiostorage_item import AIOStorageItem
 from .aiostorage_frame import AIOStorageFrame
 from .operation_result import OperationResult
 

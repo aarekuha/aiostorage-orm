@@ -1,6 +1,5 @@
 import pickle
 import logging
-import asyncio
 from typing import Any
 from typing import Union
 import redis.asyncio as redis
