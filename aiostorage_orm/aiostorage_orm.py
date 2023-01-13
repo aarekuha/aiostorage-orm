@@ -1,12 +1,11 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
 from typing import Any, Union
 
-from .storage_item import StorageItem
-from .storage_frame import StorageFrame
+from .aiostorage_frame import AIOStorageFrame
 from .operation_result import OperationResult
 
 
-class StorageORM(metaclass=ABCMeta):
+class AIOStorageORM(metaclass=ABCMeta):
     _db_instance: Any
 
     @abstractmethod
@@ -36,5 +35,5 @@ class StorageORM(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractproperty
-    def frame(self) -> StorageFrame:
+    def frame(self) -> AIOStorageFrame:
         raise NotImplementedError

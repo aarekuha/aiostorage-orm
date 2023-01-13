@@ -4,7 +4,7 @@ from typing import Any
 from .operation_result import OperationResult
 
 
-class StorageFrame(metaclass=ABCMeta):
+class AIOStorageFrame(metaclass=ABCMeta):
     _db_instance: Any
 
     @abstractmethod

@@ -4,14 +4,14 @@ from typing import Union
 import pytest
 import redis.asyncio as redis
 
-from storage_orm import RedisORM
-from storage_orm import RedisItem
+from aiostorage_orm import AIORedisORM
+from aiostorage_orm import AIORedisItem
 
 
 def test_empty_constructor() -> None:
     """ Отсутствие аргументов для подключения """
     with pytest.raises(Exception) as exception:
-        RedisORM()
+        AIORedisORM()
 
     assert "must contains" in str(exception.value)
 
@@ -19,10 +19,10 @@ def test_empty_constructor() -> None:
 @pytest.mark.asyncio
 async def test_save_item(
     test_redis: redis.Redis,
-    test_item: RedisItem,
+    test_item: AIORedisItem,
 ) -> None:
     """ Проверка сохранения данных """
-    await RedisORM(client=test_redis).save(item=test_item)
+    await AIORedisORM(client=test_redis).save(item=test_item)
     for key, value in test_item.mapping.items():
         db_item: Union[bytes, None] = await test_redis.get(key)
         # Подготовка проверяемого значение
@@ -37,46 +37,46 @@ async def test_save_item(
 
 
 @pytest.mark.asyncio
-async def test_delete(test_redis: redis.Redis, test_item: RedisItem) -> None:
+async def test_delete(test_redis: redis.Redis, test_item: AIORedisItem) -> None:
     """ Проверка вызова метода delete для одного элемента """
-    await RedisORM(client=test_redis).save(item=test_item)
+    await AIORedisORM(client=test_redis).save(item=test_item)
     count_of_item_fields: int = len(test_item._params)
     count_of_db_items: int = len(await test_redis.keys())
     assert count_of_item_fields == count_of_db_items
 
 
 @pytest.mark.asyncio
-async def test_bulk_create_rewrite_one_item(test_redis: redis.Redis, test_item: RedisItem) -> None:
+async def test_bulk_create_rewrite_one_item(test_redis: redis.Redis, test_item: AIORedisItem) -> None:
     """
     Вызов метода группового сохранения должен создать по одной записи для каждого атрибута
     В тесте используется с разными атрибутами (значениями) один и тот же элемент
     Для него должна быть создана только одна группа записей в БД
     """
     items_count: int = 11
-    items: list[RedisItem] = []
+    items: list[AIORedisItem] = []
     for i in range(items_count):
-        another_item: RedisItem = copy.copy(test_item)
+        another_item: AIORedisItem = copy.copy(test_item)
         # Изменить значение атрибутов - запись в БД должна получиться та же
         another_item._params = {key: i for key in another_item._params.keys()}
         items.append(another_item)
-    await RedisORM(client=test_redis).bulk_create(items=items)
+    await AIORedisORM(client=test_redis).bulk_create(items=items)
     count_of_db_items: int = len(await test_redis.keys())
     count_of_item_fields: int = len(test_item._params)
     assert count_of_db_items == count_of_item_fields
 
 
 @pytest.mark.asyncio
-async def test_bulk_create_different_items(test_redis: redis.Redis, test_item: RedisItem) -> None:
+async def test_bulk_create_different_items(test_redis: redis.Redis, test_item: AIORedisItem) -> None:
     """ Вызов метода группового сохранения должен создать определенное количество записей """
     items_count: int = 11
-    items: list[RedisItem] = []
+    items: list[AIORedisItem] = []
     for i in range(items_count):
-        another_item: RedisItem = copy.copy(test_item)
+        another_item: AIORedisItem = copy.copy(test_item)
         # Дополнить ключи различными значениями счетчика,
         #   чтобы получились разные записи
         another_item._table += str(i)
         items.append(another_item)
-    await RedisORM(client=test_redis).bulk_create(items=items)
+    await AIORedisORM(client=test_redis).bulk_create(items=items)
     count_of_db_items: int = len(await test_redis.keys())
     count_of_item_fields: int = len(test_item._params)
     total_keys_expected: int = count_of_item_fields * items_count
@@ -84,24 +84,24 @@ async def test_bulk_create_different_items(test_redis: redis.Redis, test_item: R
 
 
 @pytest.mark.asyncio
-async def test_bulk_delete(test_redis: redis.Redis, test_item: RedisItem) -> None:
+async def test_bulk_delete(test_redis: redis.Redis, test_item: AIORedisItem) -> None:
     """ Вызов метода группового удаления должен удалить записи переданных объектов """
     items_count: int = 11
     # Создать элементы для проверки
-    items: list[RedisItem] = []
+    items: list[AIORedisItem] = []
     for i in range(items_count):
-        another_item: RedisItem = copy.copy(test_item)
+        another_item: AIORedisItem = copy.copy(test_item)
         # Дополнить ключи различными значениями счетчика,
         #   чтобы получились разные записи
         another_item._table += str(i)
         items.append(another_item)
-    await RedisORM(client=test_redis).bulk_create(items=items)
+    await AIORedisORM(client=test_redis).bulk_create(items=items)
     count_of_db_items: int = len(await test_redis.keys())
     count_of_item_fields: int = len(test_item._params)
     total_keys_expected: int = count_of_item_fields * items_count
     assert count_of_db_items == total_keys_expected
     # Удаление почти всех объектов (один оставить)
-    await RedisORM(client=test_redis).bulk_delete(items=items[:-1])
+    await AIORedisORM(client=test_redis).bulk_delete(items=items[:-1])
     count_of_db_items = len(await test_redis.keys())
     count_of_item_fields = len(test_item._params)
     # Должны остаться значения только одного объекта
@@ -115,10 +115,10 @@ def test_init_global_db_connection(test_redis: redis.Redis) -> None:
         ссылка на него
     """
     # Удалить установленное подключение
-    RedisItem._db_instance = None
+    AIORedisItem._db_instance = None
     # Создать новое и проверить, что именно оно проинициализировалось
-    RedisORM(client=test_redis)
-    assert id(RedisItem._db_instance) == id(test_redis)
+    AIORedisORM(client=test_redis)
+    assert id(AIORedisItem._db_instance) == id(test_redis)
 
 
 def test_noreinit_global_db_connection(test_redis: redis.Redis) -> None:
@@ -128,8 +128,8 @@ def test_noreinit_global_db_connection(test_redis: redis.Redis) -> None:
         подключениях
     """
     # Установить стороннее подключение в случае отсутствия
-    if RedisItem._db_instance is None:
-        RedisORM(client=redis.Redis())
+    if AIORedisItem._db_instance is None:
+        AIORedisORM(client=redis.Redis())
     # Создать новое и проверить, что сохранилось первое подключение
-    RedisORM(client=test_redis)
-    assert id(RedisItem._db_instance) != id(test_redis)
+    AIORedisORM(client=test_redis)
+    assert id(AIORedisItem._db_instance) != id(test_redis)

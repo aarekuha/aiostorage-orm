@@ -13,14 +13,14 @@
     ```python
         import redis.asyncio as redis
 
-        from storage_orm import StorageORM
-        from storage_orm import RedisORM
-        from storage_orm import RedisItem
-        from storage_orm import OperationResult
+        from aiostorage_orm import AIOStorageORM
+        from aiostorage_orm import AIORedisORM
+        from aiostorage_orm import AIORedisItem
+        from aiostorage_orm import OperationResult
     ```
 1. Определить модель
     ```python
-        class ExampleItem(RedisItem):
+        class ExampleItem(AIORedisItem):
             """
                 Атрибуты объекта с указанием типа данных
                   (в процессе сбора данных из БД приводится тип)
@@ -39,12 +39,12 @@
 1. Установить подключение ORM можно двумя способами
     1. Передать данные для подключения непосредственно в ORM
         ```python
-            orm: StorageORM = RedisORM(host="localhost", port=8379, db=1)
+            orm: AIOStorageORM = AIORedisORM(host="localhost", port=8379, db=1)
         ```
     1. Создать подключение redis.Redis и передать его в конструктор
         ```python
             redis: redis.Redis = redis.Redis(host="localhost", port=8379, db=1)
-            orm: StorageORM = RedisORM(client=redis)
+            orm: AIOStorageORM = AIORedisORM(client=redis)
         ```
 1. Добавление/редактирование записи (ключами записи являются параметры, указанные в Meta.table модели)
     1. Создать объект на основе модели
@@ -61,7 +61,7 @@
             ```python
                 operation_result: OperationResult = await example_item.save()
             ```
-        1. Использовать метод save() StorageOrm
+        1. Использовать метод save() AIOStorageOrm
             ```python
                 operation_result: OperationResult = await orm.save(item=example_item)
             ```
@@ -82,7 +82,7 @@
             example_items: ExampleItem = await exampleitem.get(subsystem_id=3, tag_id=15)
         ```
 1. Использование нескольких подключений ([пример](examples/redis_3_using_multiple_connections.py))
-    - для использования нескольких подключений необходимо в метод StorageItem.using(db_instance=...) передать
+    - для использования нескольких подключений необходимо в метод AIOStorageItem.using(db_instance=...) передать
       подготовленное соединение с БД Redis, например
         ```python
             redis_another: redis.Redis = redis.Redis(host="localhost", port=8379, db=17)
@@ -97,14 +97,14 @@
         ```
 1. Поиск по предварительно подготовленному объекту ([пример](examples/redis_5_find_by_object.py))
     - для поиска записи указанным образом, необходимо создать объект с параметрами, необходимыми для поиска и передать
-      его в метод RedisORM.get
+      его в метод AIORedisORM.get
     ```python
         item: ExampleItem = ExampleItem(subsystem_id=1, tag_id=15)
         item_by_object: ExampleItem | None = await ExampleItem.get(_item=item)
     ```
 1. Поиск по предварительно подготовленным объектам ([пример](examples/redis_5_find_by_object.py))
     - для поиска записи указанным образом, необходимо создать объекты с параметрами, необходимыми для поиска и передать
-      их списком в метод RedisORM.filter
+      их списком в метод AIORedisORM.filter
     ```python
         items: list[ExampleItem] = [
             ExampleItem(subsystem_id=1, tag_id=15),
@@ -123,7 +123,7 @@
     ```
 1. Добавление объектов с ограниченным временем жизни ([пример](examples/redis_7_ttl.py))
     ```python
-        class ExampleItem(RedisItem):
+        class ExampleItem(AIORedisItem):
             # Атрибуты объекта с указанием типа данных (в процессе сбора данных из БД приводится тип)
             date_time: int
             any_value: str
@@ -153,7 +153,7 @@
     ```
 1. Добавление одной записи во фрейм ([пример](examples/redis_8_frame.py))
     ```python
-        class ExampleItem(RedisItem):
+        class ExampleItem(AIORedisItem):
             # Атрибуты объекта с указанием типа данных (в процессе сбора данных из БД приводится тип)
             date_time: int
             any_value: str
@@ -168,7 +168,7 @@
         result_of_operation: OperationResult = await orm.frame.add(item_or_items=example_item)
     ```
 1. Групповое добавление записей во фрейм ([пример](examples/redis_8_frame.py))
-    * записи могут быть разнородными (должны являться наследником RedisItem, но при этом они могут быть определены
+    * записи могут быть разнородными (должны являться наследником AIORedisItem, но при этом они могут быть определены
       различными друг от друга классами)
     ```python
         ...

@@ -16,10 +16,9 @@ from typing import (
     Callable
 )
 
-from ..storage_item import StorageItem
+from ..aiostorage_item import AIOStorageItem
 from ..operation_result import OperationResult
 from ..operation_result import OperationStatus
-
 from ..exceptions import MultipleGetParamsException
 from ..exceptions import NotEnoughParamsException
 
@@ -28,17 +27,17 @@ _Value = Union[bytes, float, int, str]
 _Key = Union[str, bytes]
 ResponseT = Any
 
-T = TypeVar('T', bound='RedisItem')
+T = TypeVar('T', bound='AIORedisItem')
 IN_SUFFIX = "__in"
 KEYS_DELIMITER = "."
 
 
-class RedisItem(StorageItem):
+class AIORedisItem(AIOStorageItem):
     _table: str
     _keys_positions: dict[str, int]
     _params: Mapping[_Key, _Value]
     _db_instance: Union[redis.Redis, None] = None
-    _on_init_ltrim: Union[Callable[[RedisItem, ], None], None] = None
+    _on_init_ltrim: Union[Callable[[AIORedisItem, ], None], None] = None
     _frame_size: int = 0
     _ttl: Union[int, None] = None
 
@@ -145,8 +144,8 @@ class RedisItem(StorageItem):
         """
             Получение одного объекта по выбранному фильтру
 
-                StorageItem.get(subsystem_id=10, tag_id=55)
-                StorageItem.get(_item=StorageItem(subsystem_id=10))
+                AIOStorageItem.get(subsystem_id=10, tag_id=55)
+                AIOStorageItem.get(_item=AIOStorageItem(subsystem_id=10))
         """
         if not cls._db_instance or not await cls._is_connected(db_instance=cls._db_instance):
             raise Exception("Redis database not connected...")
@@ -181,8 +180,8 @@ class RedisItem(StorageItem):
         """
             Получение объектов по фильтру переданных аргументов, например:
 
-                StorageItem.filter(subsystem_id=10, tag_id=55)
-                StorageItem.filter(_items=[StorageItem(subsystem_id=10), ...])
+                AIOStorageItem.filter(subsystem_id=10, tag_id=55)
+                AIOStorageItem.filter(_items=[AIOStorageItem(subsystem_id=10), ...])
         """
         if not cls._db_instance or not await cls._is_connected(db_instance=cls._db_instance):
             raise Exception("Redis database not connected...")
@@ -220,7 +219,7 @@ class RedisItem(StorageItem):
 
     @classmethod
     def _objects_from_db_items(cls: Type[T], items: dict[bytes, bytes]) -> list[T]:
-        """ Формирование cls(RedisItem)-объектов из данных базы """
+        """ Формирование cls(AIORedisItem)-объектов из данных базы """
         # Подготовка базовых данных для формирования объектов из ключей
         #   (уникальные ключи, без имён полей)
         tables: set[str] = {
@@ -364,7 +363,7 @@ class RedisItem(StorageItem):
             подключения, например:
 
                 another_client: redis.Redis = redis.Redis(host="8.8.8.8", db=12)
-                StorageItem.using(db_instance=another_client).get(subsystem_id=10)
+                AIOStorageItem.using(db_instance=another_client).get(subsystem_id=10)
 
             Создаётся копия класса для работы через "неглобальное" подключение к Redis
         """
