@@ -20,7 +20,7 @@ class ExampleItem(AIORedisItem):
 
 async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: StorageORM = AIORedisORM(host="localhost", port=6379)
+    orm: AIOStorageORM = AIORedisORM(host="localhost", port=6379)
 
     # Создание единичной записи
     example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=100, any_value=17.)

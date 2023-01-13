@@ -39,12 +39,12 @@
 1. Установить подключение ORM можно двумя способами
     1. Передать данные для подключения непосредственно в ORM
         ```python
-            orm: StorageORM = AIORedisORM(host="localhost", port=8379, db=1)
+            orm: AIOStorageORM = AIORedisORM(host="localhost", port=8379, db=1)
         ```
     1. Создать подключение redis.Redis и передать его в конструктор
         ```python
             redis: redis.Redis = redis.Redis(host="localhost", port=8379, db=1)
-            orm: StorageORM = AIORedisORM(client=redis)
+            orm: AIOStorageORM = AIORedisORM(client=redis)
         ```
 1. Добавление/редактирование записи (ключами записи являются параметры, указанные в Meta.table модели)
     1. Создать объект на основе модели
@@ -61,7 +61,7 @@
             ```python
                 operation_result: OperationResult = await example_item.save()
             ```
-        1. Использовать метод save() StorageOrm
+        1. Использовать метод save() AIOStorageOrm
             ```python
                 operation_result: OperationResult = await orm.save(item=example_item)
             ```
@@ -82,7 +82,7 @@
             example_items: ExampleItem = await exampleitem.get(subsystem_id=3, tag_id=15)
         ```
 1. Использование нескольких подключений ([пример](examples/redis_3_using_multiple_connections.py))
-    - для использования нескольких подключений необходимо в метод StorageItem.using(db_instance=...) передать
+    - для использования нескольких подключений необходимо в метод AIOStorageItem.using(db_instance=...) передать
       подготовленное соединение с БД Redis, например
         ```python
             redis_another: redis.Redis = redis.Redis(host="localhost", port=8379, db=17)
