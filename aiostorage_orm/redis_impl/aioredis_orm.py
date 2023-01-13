@@ -5,22 +5,22 @@ from typing import TypeVar
 import redis.asyncio as redis
 from redis.asyncio.client import Pipeline
 
-from .redis_frame import RedisFrame
-from .redis_item import RedisItem
-from .redis_item import T as SubclassItemType
+from .aioredis_frame import AIORedisFrame
+from .aioredis_item import AIORedisItem
+from .aioredis_item import T as SubclassItemType
 from ..operation_result import OperationResult
 from ..operation_result import OperationStatus
 
-from ..storage_orm import StorageORM
+from ..aiostorage_orm import AIOStorageORM
 
-ChildItem = TypeVar('ChildItem', bound=RedisItem)
+ChildItem = TypeVar('ChildItem', bound=AIORedisItem)
 
 
-class RedisORM(StorageORM):
+class AIORedisORM(AIOStorageORM):
     """ Работа с БД Redis через объектное представление """
     _pipe: Pipeline
     _client: redis.Redis
-    _frame: RedisFrame
+    _frame: AIORedisFrame
 
     def __init__(
         self,
@@ -34,20 +34,20 @@ class RedisORM(StorageORM):
         elif host:
             self._client = redis.Redis(host=host, port=port, db=db)
         else:
-            raise Exception("StorageORM-init must contains redis_client or host values...")
+            raise Exception("AIOStorageORM-init must contains redis_client or host values...")
 
         self._pipe = self._client.pipeline()
-        if not RedisItem._db_instance:
-            RedisItem._set_global_instance(db_instance=self._client)
+        if not AIORedisItem._db_instance:
+            AIORedisItem._set_global_instance(db_instance=self._client)
 
-        self._frame = RedisFrame(client=self._client)
+        self._frame = AIORedisFrame(client=self._client)
 
     @property
-    def frame(self) -> RedisFrame:
+    def frame(self) -> AIORedisFrame:
         """ Подготовленный frame для работы со списками значений """
         return self._frame
 
-    async def save(self, item: RedisItem) -> OperationResult:
+    async def save(self, item: AIORedisItem) -> OperationResult:
         """ Одиночная вставка """
         return await item.save()
 
@@ -86,7 +86,7 @@ class RedisORM(StorageORM):
                 message=str(exception),
             )
 
-    async def delete(self, item: RedisItem) -> OperationResult:
+    async def delete(self, item: AIORedisItem) -> OperationResult:
         """
             Удаление одного элемента
         """

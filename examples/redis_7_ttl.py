@@ -2,13 +2,13 @@ from typing import Union
 import random
 import asyncio
 
-from storage_orm import StorageORM
-from storage_orm import RedisORM
-from storage_orm import RedisItem
-from storage_orm import OperationResult
+from aiostorage_orm import AIOStorageORM
+from aiostorage_orm import AIORedisORM
+from aiostorage_orm import AIORedisItem
+from aiostorage_orm import OperationResult
 
 
-class ExampleItem(RedisItem):
+class ExampleItem(AIORedisItem):
     # Атрибуты объекта с указанием типа данных (в процессе сбора данных из БД приводится тип)
     date_time: int
     any_value: str
@@ -23,7 +23,7 @@ class ExampleItem(RedisItem):
 
 async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: StorageORM = RedisORM(host="localhost", port=6379)
+    orm: StorageORM = AIORedisORM(host="localhost", port=6379)
 
     # Создание единичной записи с ограниченным временем жизни
     example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=100, any_value=17.)

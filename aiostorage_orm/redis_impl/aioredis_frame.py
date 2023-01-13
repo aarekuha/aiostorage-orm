@@ -7,19 +7,19 @@ import redis.asyncio as redis
 from redis.asyncio.client import Pipeline
 from redis.commands.core import AsyncScript
 
-from .redis_item import RedisItem
-from .redis_item import T as SubclassItemType
+from .aioredis_item import AIORedisItem
+from .aioredis_item import T as SubclassItemType
 from ..operation_result import OperationResult
 from ..operation_result import OperationStatus
-from ..storage_frame import StorageFrame
+from ..aiostorage_frame import AIOStorageFrame
 
 
-class RedisFrame(StorageFrame):
+class AIORedisFrame(AIOStorageFrame):
     """
     Работа с искусственно ограниченным frame'ом объектов
 
     Frame - массив сериализованных объектов определенного размера
-    Размер frame'а задается в объекте типа RedisItem, в блоке Meta -> frame_size
+    Размер frame'а задается в объекте типа AIOStorageORM, в блоке Meta -> frame_size
     Хранимый скрипт - lua-скрипт, который добавляется в Redis путем
                       вызова register_script. Он позволяет выполнять
                       установленную последовательность действий без
@@ -56,7 +56,7 @@ class RedisFrame(StorageFrame):
             end
         """)
         # Подрезка списков, согласно установленной в subclass'е величине
-        RedisItem._on_init_ltrim = self.ltrim_by_item
+        AIORedisItem._on_init_ltrim = self.ltrim_by_item
 
     async def add(
         self,
@@ -70,7 +70,7 @@ class RedisFrame(StorageFrame):
 
         """
         try:
-            if isinstance(item_or_items, RedisItem):
+            if isinstance(item_or_items, AIORedisItem):
                 await self._add_item(item=item_or_items)
             else:
                 [await self._add_item(item) for item in item_or_items]  # type: ignore
@@ -84,14 +84,14 @@ class RedisFrame(StorageFrame):
         await self._pipe.execute()
         return OperationResult(status=OperationStatus.success)
 
-    def _get_frame_size(self, item: RedisItem) -> int:
+    def _get_frame_size(self, item: AIORedisItem) -> int:
         if hasattr(item, "_frame_size") and item._frame_size:
             queue_size = item._frame_size
         else:
             queue_size = self.DEFAULT_QUEUE_SIZE
         return queue_size
 
-    async def _add_item(self, item: RedisItem) -> None:
+    async def _add_item(self, item: AIORedisItem) -> None:
         """
         Добавление объекта в БД
 
@@ -125,7 +125,7 @@ class RedisFrame(StorageFrame):
     async def bulk_create(self, items: list[SubclassItemType]) -> OperationResult:
         return await self.add(item_or_items=items)
 
-    async def clear(self, item: RedisItem) -> OperationResult:
+    async def clear(self, item: AIORedisItem) -> OperationResult:
         """ Удаление frame'а из БД """
         try:
             key: str = self._make_key(item=item)
@@ -154,10 +154,10 @@ class RedisFrame(StorageFrame):
         result: list[SubclassItemType] = [T(**(init_dict | params)) for init_dict in init_dicts]
         return result
 
-    def _make_key(self, item: RedisItem) -> str:
+    def _make_key(self, item: AIORedisItem) -> str:
         return f"{self.FRAME_PREFIX}{item._table}"
 
-    def ltrim_by_item(self, item: RedisItem) -> None:
+    def ltrim_by_item(self, item: AIORedisItem) -> None:
         """ Форматирование(обрезка) длины очереди в соответствии с frame_size Item'а """
         return
         # key: str = self._make_key(item=item)
@@ -178,7 +178,7 @@ class RedisFrame(StorageFrame):
         """
         Получение данных из БД и приведение их к соответствующим типам объектов
 
-        item: RedisItem - объект с подготовленными для поиска параметрами
+        item: AIORedisItem - объект с подготовленными для поиска параметрами
         start_index: int - индекс начального элемента frame'а (отсчет начинается с 0,)
         end_index: int - индекс последнего элемента (включительно)
 

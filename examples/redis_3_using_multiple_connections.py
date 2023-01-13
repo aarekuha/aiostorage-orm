@@ -2,11 +2,11 @@ import redis.asyncio as redis
 from typing import Union
 import asyncio
 
-from storage_orm import RedisItem
-from storage_orm import OperationResult
+from aiostorage_orm import AIORedisItem
+from aiostorage_orm import OperationResult
 
 
-class ExampleItem(RedisItem):
+class ExampleItem(AIORedisItem):
     # Атрибуты объекта с указанием типа данных (в процессе сбора данных из БД приводится тип)
     date_time: int
     any_value: float

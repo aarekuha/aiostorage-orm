@@ -3,10 +3,10 @@ import asyncio
 import redis.asyncio as redis
 from pytest import MonkeyPatch
 
-from storage_orm import RedisItem
-from storage_orm import RedisFrame
-from storage_orm import MultipleGetParamsException
-from storage_orm import NotEnoughParamsException
+from aiostorage_orm import AIORedisItem
+from aiostorage_orm import AIORedisFrame
+from aiostorage_orm import MultipleGetParamsException
+from aiostorage_orm import NotEnoughParamsException
 
 
 def _get_prefix(src_dict: dict) -> str:
@@ -19,14 +19,14 @@ def _get_prefix(src_dict: dict) -> str:
     return expected_prefix
 
 
-def test_new_item_redis_model(test_item: RedisItem, test_input_dict: dict[str, str]) -> None:
+def test_new_item_redis_model(test_item: AIORedisItem, test_input_dict: dict[str, str]) -> None:
     """ Переданные параметры должны быть погружены в экземпляр класса """
     for key in test_input_dict.keys():
         assert test_item.__dict__[key] == test_input_dict[key]
 
 
 @pytest.mark.asyncio
-async def test_filter_not_instance(test_item: RedisItem, test_input_dict: dict[str, str]) -> None:
+async def test_filter_not_instance(test_item: AIORedisItem, test_input_dict: dict[str, str]) -> None:
     """ Осмысленное исключение, при отсутствии инициированного подключения к БД """
     with pytest.raises(Exception) as exception:
         any_dict_key: str = next(iter(test_input_dict))
@@ -38,13 +38,13 @@ async def test_filter_not_instance(test_item: RedisItem, test_input_dict: dict[s
 @pytest.mark.asyncio
 async def test_filter_oom_exclude(
     test_redis: redis.Redis,
-    test_item: RedisItem,
+    test_item: AIORedisItem,
     monkeypatch: MonkeyPatch,
 ) -> None:
     """ Для исключения ООМ должна быть проверка на запрос данных без фильтра """
     with monkeypatch.context() as patch:
         # Установить фейковое подключение, чтобы пройти проверку на его отсутствие
-        patch.setattr(RedisItem, "_db_instance", test_redis)
+        patch.setattr(AIORedisItem, "_db_instance", test_redis)
         with pytest.raises(Exception) as exception:
             await test_item.filter()
 
@@ -52,7 +52,7 @@ async def test_filter_oom_exclude(
 
 
 def test_get_filters_by_kwargs_all(
-    test_item: RedisItem,
+    test_item: AIORedisItem,
     test_input_dict: dict,
 ) -> None:
     """ Проверка формирования фильтра для таблицы """
@@ -63,7 +63,7 @@ def test_get_filters_by_kwargs_all(
 
 @pytest.mark.parametrize("param_key", ["param1", "param2"])
 def test_get_filters_by_kwargs_one_of_two(
-    test_item: RedisItem,
+    test_item: AIORedisItem,
     test_input_dict: dict,
     param_key: str,  # Исключаемый параметр
 ) -> None:
@@ -87,7 +87,7 @@ def test_get_filters_by_kwargs_one_of_two(
     assert test_item._get_filters_by_kwargs(**modified_dict) == expected_filters_list
 
 
-def test_mapping(test_item: RedisItem, test_input_dict: dict) -> None:
+def test_mapping(test_item: AIORedisItem, test_input_dict: dict) -> None:
     """ Проверка формирования карты значений атрибутов """
     # Подготовка префикса атрибура
     expected_prefix: str = _get_prefix(src_dict=test_input_dict)
@@ -100,7 +100,7 @@ def test_mapping(test_item: RedisItem, test_input_dict: dict) -> None:
     assert test_item.mapping == expected_dict
 
 
-def test_using_when_empty(test_item: RedisItem) -> None:
+def test_using_when_empty(test_item: AIORedisItem) -> None:
     """ Проверка подстановки используемого клиента БД, когда он не определен """
     # Проверка отсутствия установленного клиента
     assert test_item._db_instance is None
@@ -111,7 +111,7 @@ def test_using_when_empty(test_item: RedisItem) -> None:
     assert test_item._db_instance is None
 
 
-def test_using_when_defined(test_item: RedisItem, monkeypatch: MonkeyPatch) -> None:
+def test_using_when_defined(test_item: AIORedisItem, monkeypatch: MonkeyPatch) -> None:
     """ Проверка подстановки используемого клиента БД, когда он ранее определен """
     with monkeypatch.context() as patch:
         # Назначение глобального инстанса и его проверка
@@ -126,7 +126,7 @@ def test_using_when_defined(test_item: RedisItem, monkeypatch: MonkeyPatch) -> N
 
 
 @pytest.mark.asyncio
-async def test_save_when_instance_not_defined(test_item: RedisItem) -> None:
+async def test_save_when_instance_not_defined(test_item: AIORedisItem) -> None:
     """
         Сохранение объекта в БД.
         Определение исключения при попытке сохранения до установки подключения
@@ -138,7 +138,7 @@ async def test_save_when_instance_not_defined(test_item: RedisItem) -> None:
 
 
 @pytest.mark.asyncio
-async def test_save(test_item: RedisItem, test_redis: redis.Redis) -> None:
+async def test_save(test_item: AIORedisItem, test_redis: redis.Redis) -> None:
     """ Сохранение объекта в БД """
     expected_keys_count: int = len(test_item.mapping.keys())
     await test_item.using(db_instance=test_redis).save()
@@ -148,10 +148,10 @@ async def test_save(test_item: RedisItem, test_redis: redis.Redis) -> None:
 
 def test_objects_from_db_items(
     test_input_dict: dict[str, str],
-    test_item: RedisItem,
+    test_item: AIORedisItem,
 ) -> None:
     """ Формирование объектов из полученных данных """
-    expected_item: RedisItem = test_item.__class__(**test_input_dict)
+    expected_item: AIORedisItem = test_item.__class__(**test_input_dict)
     expected_prefix: str = _get_prefix(src_dict=test_input_dict)
     test_data: dict[bytes, bytes] = {
         f"{expected_prefix}.{key}".encode(): value if isinstance(value, bytes) else str(value).encode()
@@ -168,8 +168,8 @@ async def test_get_multiple_params_exception(
 ) -> None:
     """ Выброс исключения, во время использования метода get(), когда не найдено ни одной записи """
     with monkeypatch.context() as patch, pytest.raises(MultipleGetParamsException):
-        patch.setattr(RedisItem, "_db_instance", test_redis)
-        await RedisItem.get(subsystem_id__in=[1, 2])
+        patch.setattr(AIORedisItem, "_db_instance", test_redis)
+        await AIORedisItem.get(subsystem_id__in=[1, 2])
 
 
 @pytest.mark.asyncio
@@ -179,8 +179,8 @@ async def test_get_not_enough_params(
 ) -> None:
     """ Выброс исключения, во время использования метода get(), когда найдено несколько записей """
     with monkeypatch.context() as patch, pytest.raises(NotEnoughParamsException):
-        patch.setattr(RedisItem, "_db_instance", test_redis)
-        await RedisItem.get()
+        patch.setattr(AIORedisItem, "_db_instance", test_redis)
+        await AIORedisItem.get()
 
 
 @pytest.mark.parametrize(
@@ -213,7 +213,7 @@ async def test_get_not_enough_params(
 )
 def test_get_list_of_prepared_kwargs(input_kwargs: dict, expected_kwargs: dict) -> None:
     """ Формирование элементов для использования в паттерне поиска """
-    assert RedisItem._get_list_of_prepared_kwargs(**input_kwargs) == expected_kwargs
+    assert AIORedisItem._get_list_of_prepared_kwargs(**input_kwargs) == expected_kwargs
 
 
 @pytest.mark.parametrize(
@@ -238,13 +238,13 @@ def test_get_list_of_prepared_kwargs(input_kwargs: dict, expected_kwargs: dict) 
         ),
     ],
 )
-def test_get_keys_list(test_item: RedisItem, prefix: str, expected_keys_list: list[bytes]) -> None:
+def test_get_keys_list(test_item: AIORedisItem, prefix: str, expected_keys_list: list[bytes]) -> None:
     """ Формирование ключей для поиска в БД на основе префикса и атрибутов класса"""
     assert test_item._get_keys_list(prefix=prefix) == expected_keys_list
 
 
 @pytest.mark.asyncio
-async def test_delete(test_item: RedisItem, test_redis: redis.Redis) -> None:
+async def test_delete(test_item: AIORedisItem, test_redis: redis.Redis) -> None:
     """ Проверка вызова метода delete один раз для удаления элемента """
     # Создать один элемент для проверки
     expected_keys_count: int = len(test_item.mapping.keys())
@@ -257,7 +257,7 @@ async def test_delete(test_item: RedisItem, test_redis: redis.Redis) -> None:
     assert db_keys_count == 0
 
 
-def test_set_ttl(test_item: RedisItem) -> None:
+def test_set_ttl(test_item: AIORedisItem) -> None:
     """ Проверка изменения ttl соответствующим вызовом метода """
     prev_ttl: int = test_item._ttl or 1
     new_ttl: int = prev_ttl * 2
@@ -265,7 +265,7 @@ def test_set_ttl(test_item: RedisItem) -> None:
     assert test_item._ttl == new_ttl
 
 
-def test_set_frame_size(test_item: RedisItem) -> None:
+def test_set_frame_size(test_item: AIORedisItem) -> None:
     """ Проверка изменения frame_size соответствующим вызовом метода """
     prev_frame_size: int = test_item._frame_size or 1
     new_frame_size: int = prev_frame_size * 2

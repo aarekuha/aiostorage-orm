@@ -1,14 +1,14 @@
 from time import monotonic
 import asyncio
 
-from storage_orm import RedisORM
-from storage_orm import RedisItem
-from storage_orm import StorageORM
+from aiostorage_orm import AIORedisORM
+from aiostorage_orm import AIORedisItem
+from aiostorage_orm import AIOStorageORM
 
 COUNT: int = 1000
 
 
-class TestItem(RedisItem):
+class TestItem(AIORedisItem):
     attr1: int
     attr2: str
 
@@ -19,7 +19,7 @@ class TestItem(RedisItem):
 async def main():
     # Write test
     start_time: float = monotonic()
-    redis_orm: StorageORM = RedisORM(host="localhost", port=6379, db=1)
+    redis_orm: StorageORM = AIORedisORM(host="localhost", port=6379, db=1)
     await redis_orm.bulk_create([
         TestItem(attr1=i, attr2=str(i), param1=i % 5, param2=i % 3) for i in range(COUNT)
     ])

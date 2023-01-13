@@ -6,8 +6,8 @@ import redis.asyncio as redis
 from pytest_mock_resources import pmr_redis_config  # type: ignore
 from pytest_mock_resources import pmr_redis_container  # type: ignore
 
-from storage_orm import RedisItem
-from storage_orm import RedisFrame
+from aiostorage_orm import AIORedisItem
+from aiostorage_orm import AIORedisFrame
 
 
 @pytest.fixture(scope="session")
@@ -17,9 +17,9 @@ def event_loop():
 
 
 @pytest.fixture
-def test_item(test_input_dict: dict) -> RedisItem:
+def test_item(test_input_dict: dict) -> AIORedisItem:
     """ Тестовый экземплар класса """
-    class TestItem(RedisItem):
+    class TestItem(AIORedisItem):
         """ Тестовый пример класса """
         attr1: str
         attr2: int
@@ -58,5 +58,5 @@ def test_redis(pmr_redis_container, pmr_redis_config) -> redis.Redis:  # type: i
 
 
 @pytest.fixture
-def test_frame(test_redis) -> RedisFrame:
-    return RedisFrame(client=test_redis)
+def test_frame(test_redis) -> AIORedisFrame:
+    return AIORedisFrame(client=test_redis)

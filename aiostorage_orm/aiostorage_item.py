@@ -2,16 +2,16 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from typing import Any, Type, Union
 
-from storage_orm.operation_result import OperationResult
+from aiostorage_orm.operation_result import OperationResult
 
 
-class StorageItem(metaclass=ABCMeta):
+class AIOStorageItem(metaclass=ABCMeta):
     """
         Базовая модель для объекта БД
         - Для создания модели на основе текущей, необходимо определить класс
           конфигурации Meta и создать поля объекта, например:
 
-            class MyModel(StorageItem):
+            class MyModel(AIOStorageItem):
                 date_time: float
                 any_value: int
 
@@ -22,12 +22,12 @@ class StorageItem(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    async def get(cls, _item, **kwargs) -> Union[StorageItem, None]:
+    async def get(cls, _item, **kwargs) -> Union[AIOStorageItem, None]:
         """
             Получение одного объекта по выбранному фильтру
 
-                StorageItem.get(subsystem_id=10, tag_id=55)
-                StorageItem.get(_item=StorageItem(subsystem_id=10))
+                AIOStorageItem.get(subsystem_id=10, tag_id=55)
+                AIOStorageItem.get(_item=AIOStorageItem(subsystem_id=10))
         """
         raise NotImplementedError
 
@@ -37,20 +37,20 @@ class StorageItem(metaclass=ABCMeta):
         """
             Получение объектов по фильтру переданных аргументов, например:
 
-                StorageItem.filter(subsystem_id=10, tag_id=55)
-                StorageItem.filter(_items=[StorageItem(subsystem_id=10), ...])
+                AIOStorageItem.filter(subsystem_id=10, tag_id=55)
+                AIOStorageItem.filter(_items=[AIOStorageItem(subsystem_id=10), ...])
         """
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def using(cls, db_instance) -> StorageItem:
+    def using(cls, db_instance) -> AIOStorageItem:
         """
             Выполнение операций с БД путём direct-указания используемого
             подключения, например:
 
                 another_client: redis.Redis = redis.Redis(host="8.8.8.8", db=12)
-                StorageItem.using(db_instance=another_client).get(subsystem_id=10)
+                AIOStorageItem.using(db_instance=another_client).get(subsystem_id=10)
         """
         raise NotImplementedError
 
