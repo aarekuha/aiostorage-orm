@@ -269,3 +269,14 @@ def test_set_frame_size(test_item: AIORedisItem) -> None:
     new_frame_size: int = prev_frame_size * 2
     test_item.set_frame_size(new_frame_size)
     assert test_item._frame_size == new_frame_size
+
+
+def test_all_fields_is_empty():
+    """ Проверка на то, что все поля создаваемого объекта являются пустыми (то есть не были получкены из БД) """
+    assert not AIORedisItem._all_fields_is_empty(items={b'one': b'value'}, fields=[b'one'])
+    assert not AIORedisItem._all_fields_is_empty(items={b'one': b''}, fields=[b'one'])
+    assert AIORedisItem._all_fields_is_empty(items={b'one': None}, fields=[b'one'])  # type: ignore
+    assert not AIORedisItem._all_fields_is_empty(
+        items={b'one': None, b'two': b'value'},  # type: ignore
+        fields=[b'one', b'two'],
+    )
