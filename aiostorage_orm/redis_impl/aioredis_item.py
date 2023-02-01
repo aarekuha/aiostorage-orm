@@ -218,6 +218,14 @@ class AIORedisItem(AIOStorageItem):
         return result
 
     @classmethod
+    def _all_fields_is_empty(cls: Type[T], items: dict[bytes, bytes], fields: list[bytes]) -> bool:
+        """ Проверка на отсутствие всех значений создаваемого объекта """
+        for field in fields:
+            if field in items and items[field] is not None:
+                return False
+        return True
+
+    @classmethod
     def _objects_from_db_items(cls: Type[T], items: dict[bytes, bytes]) -> list[T]:
         """ Формирование cls(AIORedisItem)-объектов из данных базы """
         # Подготовка базовых данных для формирования объектов из ключей
@@ -232,6 +240,8 @@ class AIORedisItem(AIOStorageItem):
             fields_src: list[bytes] = list(
                 filter(lambda item: str(item).startswith(table), items)
             )
+            if cls._all_fields_is_empty(items=items, fields=fields_src):
+                continue
             fields: dict[str, Any] = {}
             for field in fields_src:
                 # Формирование атрибутов объекта из присутствующих полей
