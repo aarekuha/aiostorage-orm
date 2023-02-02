@@ -32,11 +32,6 @@ jobs:
          uses: actions-ecosystem/action-add-labels@v1
          with:
            labels: comments
-      - name: remove teamlead label
-        if: contains(github.event.pull_request.labels.*.name, 'teamlead')
-        uses: actions-ecosystem/action-remove-labels@v1
-        with:
-          labels: teamlead
       - name: remove review label
         if: contains(github.event.pull_request.labels.*.name, 'review')
         uses: actions-ecosystem/action-remove-labels@v1

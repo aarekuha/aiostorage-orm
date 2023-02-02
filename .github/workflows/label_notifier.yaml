@@ -10,21 +10,6 @@ jobs:
     name: send Telegram message
     runs-on: ubuntu-latest
     steps:
-      - name: send telegram message on pull_request with label teamlead
-        if: ${{ github.event.label.name == 'teamlead' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: |
-            ${{ github.actor }} added 🔴teamlead label. @vamos_7, check it out!
-            
-            🔀 PR title: ${{ github.event.pull_request.title }}
-            
-            🔀 PR link:
-            https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
-            
-            📂 Repository: ${{ github.repository }}
       - name: send telegram message on pull_request with label review
         if: ${{ github.event.label.name == 'review' }}
         uses: appleboy/telegram-action@master
@@ -48,21 +33,6 @@ jobs:
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
             ${{ github.actor }} added 🧑‍🔧techlead label. @H2O_20, check it out!
-            
-            🔀 PR title: ${{ github.event.pull_request.title }}
-            
-            🔀 PR link:
-            https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
-            
-            📂 Repository: ${{ github.repository }}
-      - name: send telegram message on pull_request with label 'ready to merge'
-        if: ${{ github.event.label.name == 'ready to merge' }}
-        uses: appleboy/telegram-action@master
-        with:
-          to: ${{ secrets.TELEGRAM_TO }}
-          token: ${{ secrets.TELEGRAM_TOKEN }}
-          message: |
-            ${{ github.actor }} added ‍🟢ready to merge label
             
             🔀 PR title: ${{ github.event.pull_request.title }}
             
