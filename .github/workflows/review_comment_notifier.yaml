@@ -1,0 +1,49 @@
+name: Telegram Review Comment Notifier
+
+on:
+  pull_request_review_comment:
+    types: [created, edited]
+  workflow_dispatch:
+
+jobs:
+  send_msg_review_comment:
+    name: send message if review comment
+    runs-on: ubuntu-latest
+    steps:
+      - name: send message if review comment
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ${{ github.actor }} added 🟣comment
+
+            🔀 PR title: ${{ github.event.pull_request.title }}
+            
+            📝 Comment:
+            ${{ github.event.comment.body }}
+            
+            📝 Comment link:
+            ${{ github.event.comment.html_url }}
+            
+            📂 Repository: ${{ github.repository }}
+      -  name: set comment label
+         if: ${{ !contains(github.event.pull_request.labels.*.name, 'comment') }}
+         uses: actions-ecosystem/action-add-labels@v1
+         with:
+           labels: comments
+      - name: remove teamlead label
+        if: contains(github.event.pull_request.labels.*.name, 'teamlead')
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: teamlead
+      - name: remove review label
+        if: contains(github.event.pull_request.labels.*.name, 'review')
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: review
+      - name: remove techlead label
+        if: contains(github.event.pull_request.labels.*.name, 'techlead')
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: techlead
