@@ -1,0 +1,26 @@
+name: Merge notifier
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  send_msg:
+    if: github.event.pull_request.merged == true
+    name: send Telegram message
+    runs-on: ubuntu-latest
+    steps:
+      - name: send telegram message on merged pull_request
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ✅ Pull request has been merged!
+            
+            🔀 PR title: ${{ github.event.pull_request.title }}
+            
+            🔀 PR link:
+            https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
+            
+            📂 Repository: ${{ github.repository }}
