@@ -263,11 +263,12 @@ def test_set_ttl(test_item: AIORedisItem) -> None:
     assert test_item._ttl == new_ttl
 
 
-def test_set_frame_size(test_item: AIORedisItem) -> None:
+@pytest.mark.asyncio
+async def test_set_frame_size(test_item: AIORedisItem) -> None:
     """ Проверка изменения frame_size соответствующим вызовом метода """
     prev_frame_size: int = test_item._frame_size or 1
     new_frame_size: int = prev_frame_size * 2
-    test_item.set_frame_size(new_frame_size)
+    await test_item.set_frame_size(new_frame_size)
     assert test_item._frame_size == new_frame_size
 
 

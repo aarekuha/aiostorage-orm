@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import Union
 from typing import TypeVar
 
@@ -41,6 +42,26 @@ class AIORedisORM(AIOStorageORM):
             AIORedisItem._set_global_instance(db_instance=self._client)
 
         self._frame = AIORedisFrame(client=self._client)
+
+    async def init(self) -> None:
+        """
+        Проверка подключения к redis
+        """
+        await self._raise_for_connection()
+
+    async def _raise_for_connection(self):
+        """
+        Retry проверка подключения к redis
+
+        Ошибки:
+            При отсутствии подключения к redis выбрасывается исключение ConnectionError
+        """
+        time_for_retry = [5, 2, 1, 0.5, 0.1]
+        while time_for_retry:
+            if await AIORedisItem._is_connected(AIORedisItem._db_instance):
+                return
+            time.sleep(time_for_retry.pop())
+        raise ConnectionError("Redis connection error...")
 
     @property
     def frame(self) -> AIORedisFrame:

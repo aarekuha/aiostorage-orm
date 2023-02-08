@@ -206,7 +206,6 @@ async def test_add_squeeze_out_oldest(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip(reason="Находится в разработке: вынос в init метод логики конструктора")
 async def test_item_set_frame_size(
     test_frame: AIORedisFrame,
     test_redis: redis.Redis,
@@ -221,6 +220,7 @@ async def test_item_set_frame_size(
 
     # Подготовка данных для образца
     test_item: AIORedisItem = TestItem(param1=1)
+    await test_item.init_frame()
     await test_frame.add([test_item for _ in range(INIT_FRAME_SIZE)])
     key: str = test_frame._make_key(item=test_item)
     db_frame_len: int = await test_redis.llen(key)
@@ -228,7 +228,7 @@ async def test_item_set_frame_size(
     # Обрезка половины frame'а
     NEW_FRAME_SIZE: int = round(INIT_FRAME_SIZE / 2)
     test_item._db_instance = test_redis
-    test_item.set_frame_size(NEW_FRAME_SIZE)
+    await test_item.set_frame_size(NEW_FRAME_SIZE)
 
     assert test_item._frame_size == NEW_FRAME_SIZE
     db_frame_len = await test_redis.llen(key)

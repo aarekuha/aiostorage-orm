@@ -10,10 +10,11 @@ from typing import (
     Any,
     cast,
     Union,
+    Optional,
     Mapping,
     Type,
     TypeVar,
-    Callable
+    Coroutine
 )
 
 from ..aiostorage_item import AIOStorageItem
@@ -21,6 +22,7 @@ from ..operation_result import OperationResult
 from ..operation_result import OperationStatus
 from ..exceptions import MultipleGetParamsException
 from ..exceptions import NotEnoughParamsException
+from ..exceptions import OrmNotInitializedException
 
 # Redis: переопределения типов для корректной работы линтеров
 _Value = Union[bytes, float, int, str]
@@ -36,15 +38,15 @@ class AIORedisItem(AIOStorageItem):
     _table: str
     _keys_positions: dict[str, int]
     _params: Mapping[_Key, _Value]
-    _db_instance: Union[redis.Redis, None] = None
-    _on_init_ltrim: Union[Callable[[AIORedisItem, ], None], None] = None
+    _db_instance: Optional[redis.Redis] = None
+    _frame_ltrim: Optional[Coroutine[None]] = None
     _frame_size: int = 0
-    _ttl: Union[int, None] = None
+    _ttl: Optional[int] = None
 
     class Meta:
         table: str = ""  # Pattern имени записи, например, "subsystem.{subsystem_id}.tag.{tag_id}"
-        ttl: Union[int, None] = None  # Время жизни объекта в базе данных
-        frame_size: Union[int, None] = 100  # Максимальный размер frame'а
+        ttl: Optional[int] = None  # Время жизни объекта в базе данных
+        frame_size: Optional[int] = 100  # Максимальный размер frame'а
 
     def __init_subclass__(cls) -> None:
         cls._keys_positions = {
@@ -52,6 +54,9 @@ class AIORedisItem(AIOStorageItem):
             for key, index in enumerate(cls.Meta.table.split(KEYS_DELIMITER))
             if index.startswith("{") and index.endswith("}")
         }
+        # Аргумент, который используется для дальнейшей проверки и работы
+        if hasattr(cls.Meta, "frame_size"):
+            setattr(cls, "_frame_size", cls.Meta.frame_size)
 
     @classmethod
     def _make_kwargs_from_objects(cls: Type[T], objects: list[T]) -> dict:
@@ -77,7 +82,7 @@ class AIORedisItem(AIOStorageItem):
         """ Установка настройки времени жизни объекта 'на лету' """
         setattr(self, "_ttl", new_ttl)
 
-    def set_frame_size(self, new_frame_size: int = 0) -> None:
+    async def set_frame_size(self, new_frame_size: int = 0) -> None:
         """ Установка настройки максимального размера frame'а 'на лету' """
         meta_frame_size: int | None = self.Meta.frame_size if hasattr(self.Meta, "frame_size") else None
         old_frame_size: int = self._frame_size or meta_frame_size or 0
@@ -93,8 +98,17 @@ class AIORedisItem(AIOStorageItem):
         # Проверка необходимости подрезки frame'а
         if old_frame_size > new_frame_size:
             # Подрезка фрейма в БД
-            if self._on_init_ltrim:
-                self._on_init_ltrim(self)
+            if self._frame_ltrim:
+                await self._frame_ltrim(self)
+
+    async def init_frame(self) -> None:
+        """
+        Инициализация для выполнения подрезки фрейма
+        """
+        if self._frame_ltrim:
+            await self._frame_ltrim(self)
+        else:
+            raise OrmNotInitializedException("ORM not initialized")
 
     def __init__(self, **kwargs) -> None:
         # Установка атрибутов из конструктора
@@ -112,9 +126,6 @@ class AIORedisItem(AIOStorageItem):
         }
         # Перегрузка методов для экземпляра класса
         self.using = self.instance_using  # type: ignore
-        if self._on_init_ltrim:
-            self.set_frame_size()
-            self._on_init_ltrim(self)
 
     def __getattr__(self, attr_name: str):
         return object.__getattribute__(self, attr_name)
