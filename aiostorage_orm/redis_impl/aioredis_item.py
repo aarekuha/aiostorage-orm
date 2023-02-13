@@ -14,7 +14,9 @@ from typing import (
     Mapping,
     Type,
     TypeVar,
-    Coroutine
+    Coroutine,
+    Awaitable,
+    Callable
 )
 
 from ..aiostorage_item import AIOStorageItem
@@ -39,7 +41,7 @@ class AIORedisItem(AIOStorageItem):
     _keys_positions: dict[str, int]
     _params: Mapping[_Key, _Value]
     _db_instance: Optional[redis.Redis] = None
-    _frame_ltrim: Optional[Coroutine[None]] = None
+    _frame_ltrim: Callable[[Any, Any], Awaitable[Any]] = None
     _frame_size: int = 0
     _ttl: Optional[int] = None
 
