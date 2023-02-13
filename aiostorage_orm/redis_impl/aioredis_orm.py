@@ -58,7 +58,7 @@ class AIORedisORM(AIOStorageORM):
         """
         time_for_retry = [5, 2, 1, 0.5, 0.1]
         while time_for_retry:
-            if await AIORedisItem._is_connected(AIORedisItem._db_instance):
+            if await AIORedisItem._is_connected(AIORedisItem._db_instance):  # type: ignore
                 return
             time.sleep(time_for_retry.pop())
         raise ConnectionError("Redis connection error...")
