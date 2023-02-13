@@ -41,7 +41,7 @@ class AIORedisItem(AIOStorageItem):
     _keys_positions: dict[str, int]
     _params: Mapping[_Key, _Value]
     _db_instance: Union[redis.Redis, None] = None
-    _frame_ltrim: Optional[Callable[[Any, Any], Awaitable[Any]]] = None
+    _frame_ltrim: Optional[Callable[[AIORedisItem], Coroutine[Any, Any, None]]] = None
     _frame_size: int = 0
     _ttl: Optional[int] = None
 
