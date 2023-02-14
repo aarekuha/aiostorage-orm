@@ -10,3 +10,4 @@ from .operation_result import OperationStatus
 
 from .exceptions import NotEnoughParamsException
 from .exceptions import MultipleGetParamsException
+from .exceptions import OrmNotInitializedException

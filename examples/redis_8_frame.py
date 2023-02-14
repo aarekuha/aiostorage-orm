@@ -45,6 +45,7 @@ async def main() -> None:
             any_value=random.random() * 10,
         )
         example_items.append(example_item)
+    await example_items[0].init_frame()
     result_of_operation = await orm.frame.add(item_or_items=example_items)
     print(result_of_operation)
     # Получение сохраненных во frame'е данных

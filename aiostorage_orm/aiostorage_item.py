@@ -74,6 +74,6 @@ class AIOStorageItem(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def set_frame_size(self, new_frame_size) -> None:
+    async def set_frame_size(self, new_frame_size) -> None:
         """ Установка настройки максимального размера frame'а 'на лету' """
         raise NotImplementedError

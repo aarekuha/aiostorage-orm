@@ -4,3 +4,7 @@ class MultipleGetParamsException(Exception):
 
 class NotEnoughParamsException(Exception):
     pass
+
+
+class OrmNotInitializedException(Exception):
+    pass

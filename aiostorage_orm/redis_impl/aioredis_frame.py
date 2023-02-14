@@ -55,7 +55,7 @@ class AIORedisFrame(AIOStorageFrame):
             end
         """)
         # Подрезка списков, согласно установленной в subclass'е величине
-        AIORedisItem._on_init_ltrim = self.ltrim_by_item
+        AIORedisItem._frame_ltrim = self.ltrim_by_item
 
     async def add(
         self,
@@ -156,17 +156,13 @@ class AIORedisFrame(AIOStorageFrame):
     def _make_key(self, item: AIORedisItem) -> str:
         return f"{self.FRAME_PREFIX}{item._table}"
 
-    def ltrim_by_item(self, item: AIORedisItem) -> None:
+    async def ltrim_by_item(self, item: AIORedisItem) -> None:
         """ Форматирование(обрезка) длины очереди в соответствии с frame_size Item'а """
-        return
-        # key: str = self._make_key(item=item)
-        # # Вызываем асинхронные методы redis.Redis внутри синхронной функции ltrim_by_item
-        # loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        # total_items_count: int = loop.run_until_complete(self._client.llen(key))
-        # # total_items_count: int = asyncio.run(self._client.llen(key))
-        # queue_size: int = self._get_frame_size(item=item)
-        # if total_items_count > queue_size:
-        #     loop.run_until_complete(self._client.ltrim(key, -queue_size, self.QUEUE_END_INDEX))
+        key: str = self._make_key(item=item)
+        total_items_count: int = await self._client.llen(key)
+        queue_size: int = self._get_frame_size(item=item)
+        if total_items_count > queue_size:
+            await self._client.ltrim(key, -queue_size, self.QUEUE_END_INDEX)
 
     async def get(
         self,
