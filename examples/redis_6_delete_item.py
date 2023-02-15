@@ -19,16 +19,17 @@ class ExampleItem(AIORedisItem):
 
 async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: AIOStorageORM = AIORedisORM(host="localhost", port=6379)
+    orm: AIORedisORM = AIORedisORM(host="localhost", port=6379)
+    await orm.init()
 
     # Создание единичной записи
     example_item: ExampleItem = ExampleItem(subsystem_id=3, tag_id=15, date_time=100, any_value=17.)
     await example_item.save()
-    print(f"After save: {ExampleItem.get(subsystem_id=3, tag_id=15)=}")
+    print(f"After save: {await ExampleItem.get(subsystem_id=3, tag_id=15)=}")
 
     # Удаление единичной записи
     await example_item.delete()
-    print(f"After delete: {ExampleItem.get(subsystem_id=3, tag_id=15)=}")
+    print(f"After delete: {await ExampleItem.get(subsystem_id=3, tag_id=15)=}")
 
     # Создание нескольких записей
     # Подготовка данных
@@ -49,7 +50,7 @@ async def main():
         print(f"{item=}")
     # Удаление нескольких записей
     await orm.bulk_delete(items=example_items)
-    print(f"After delete: {ExampleItem.filter(_items=example_items)=}")
+    print(f"After delete: {await ExampleItem.filter(_items=example_items)=}")
 
 
 asyncio.run(main())
