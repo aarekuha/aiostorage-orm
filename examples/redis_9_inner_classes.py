@@ -25,7 +25,8 @@ class ExampleItem(AIORedisItem):
 
 async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    AIORedisORM(host="localhost", port=6379)
+    orm: AIORedisORM = AIORedisORM(host="localhost", port=6379)
+    await orm.init()
 
     print("Создание единичной записи с использованием сложных типов данных (IntEnum) у атрибутов")
     example_item: ExampleItem = ExampleItem(
