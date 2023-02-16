@@ -40,11 +40,13 @@
     1. Передать данные для подключения непосредственно в ORM
         ```python
             orm: AIOStorageORM = AIORedisORM(host="localhost", port=8379, db=1)
+            await orm.init()
         ```
     1. Создать подключение redis.Redis и передать его в конструктор
         ```python
             redis: redis.Redis = redis.Redis(host="localhost", port=8379, db=1)
             orm: AIOStorageORM = AIORedisORM(client=redis)
+            await orm.init()
         ```
 1. Добавление/редактирование записи (ключами записи являются параметры, указанные в Meta.table модели)
     1. Создать объект на основе модели
