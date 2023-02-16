@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 import re
 import copy
 import pickle
@@ -17,7 +16,6 @@ from typing import (
     Type,
     TypeVar,
     Coroutine,
-    Awaitable,
     Callable
 )
 
