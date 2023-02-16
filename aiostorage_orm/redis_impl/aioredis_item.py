@@ -2,6 +2,8 @@ from __future__ import annotations
 import logging
 import re
 import copy
+import pickle
+from contextlib import suppress
 
 import redis.asyncio as redis
 from redis.exceptions import ConnectionError
@@ -234,8 +236,9 @@ class AIORedisItem(AIOStorageItem):
     def _all_fields_is_empty(cls: Type[T], items: dict[bytes, bytes], fields: list[bytes]) -> bool:
         """ Проверка на отсутствие всех значений создаваемого объекта """
         for field in fields:
-            if field in items and items[field] is not None:
-                return False
+            with suppress(pickle.UnpicklingError):
+                if field in items and items[field] and pickle.loads(items[field]) is not None:
+                    return False
         return True
 
     @classmethod
@@ -259,18 +262,7 @@ class AIORedisItem(AIOStorageItem):
             for field in fields_src:
                 # Формирование атрибутов объекта из присутствующих полей
                 key: str = field.decode().rsplit(KEYS_DELIMITER, 1)[1]
-                # Приведение типа к соответствующему полю cls
-                if cls.__annotations__[key] is str:
-                    fields[key] = items[field].decode()
-                else:
-                    try:
-                        fields[key] = cls.__annotations__[key](items[field])
-                    except TypeError:
-                        logging.warning(
-                            f"Type cast exception: {key=}, {field=}, "
-                            f"{items[field]=}, {cls.__annotations__[key]=}"
-                        )
-                        fields[key] = None
+                fields[key] = pickle.loads(items[field])
 
             # Формирование Meta из table класса и префикса полученных данных
             table_args: dict = {}
@@ -349,7 +341,7 @@ class AIORedisItem(AIOStorageItem):
     def mapping(self) -> Mapping[_Key, _Value]:
         """ Формирование ключей и значений для БД """
         return {
-            KEYS_DELIMITER.join([self._table, str(key)]): value
+            KEYS_DELIMITER.join([self._table, str(key)]): pickle.dumps(value)
             for key, value in self._params.items()
         }
 

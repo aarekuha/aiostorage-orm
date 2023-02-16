@@ -1,4 +1,5 @@
 import pytest
+import pickle
 import redis.asyncio as redis
 from pytest import MonkeyPatch
 
@@ -91,7 +92,7 @@ def test_mapping(test_item: AIORedisItem, test_input_dict: dict) -> None:
     expected_prefix: str = _get_prefix(src_dict=test_input_dict)
     # Подготовка атрибутов с префиксом для проверки
     expected_dict: dict = {
-        f"{expected_prefix}.{key}": value
+        f"{expected_prefix}.{key}": pickle.dumps(value)
         for key, value in test_input_dict.items()
         if not key.startswith("param")
     }
@@ -152,7 +153,7 @@ def test_objects_from_db_items(
     expected_item: AIORedisItem = test_item.__class__(**test_input_dict)
     expected_prefix: str = _get_prefix(src_dict=test_input_dict)
     test_data: dict[bytes, bytes] = {
-        f"{expected_prefix}.{key}".encode(): value if isinstance(value, bytes) else str(value).encode()
+        f"{expected_prefix}.{key}".encode(): pickle.dumps(value)
         for key, value in test_input_dict.items()
         if key.startswith("attr")
     }
@@ -274,10 +275,10 @@ async def test_set_frame_size(test_item: AIORedisItem) -> None:
 
 def test_all_fields_is_empty():
     """ Проверка на то, что все поля создаваемого объекта являются пустыми (то есть не были получкены из БД) """
-    assert not AIORedisItem._all_fields_is_empty(items={b'one': b'value'}, fields=[b'one'])
-    assert not AIORedisItem._all_fields_is_empty(items={b'one': b''}, fields=[b'one'])
+    assert not AIORedisItem._all_fields_is_empty(items={b'one': pickle.dumps('value')}, fields=[b'one'])
+    assert AIORedisItem._all_fields_is_empty(items={b'one': b''}, fields=[b'one'])
     assert AIORedisItem._all_fields_is_empty(items={b'one': None}, fields=[b'one'])  # type: ignore
     assert not AIORedisItem._all_fields_is_empty(
-        items={b'one': None, b'two': b'value'},  # type: ignore
+        items={b'one': None, b'two': pickle.dumps('value')},  # type: ignore
         fields=[b'one', b'two'],
     )
