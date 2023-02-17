@@ -19,6 +19,10 @@ class AIOStorageORM(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
+    async def init(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
     async def save(self, item) -> OperationResult:
         raise NotImplementedError
 

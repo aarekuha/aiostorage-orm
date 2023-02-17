@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 import re
 import copy
 import pickle
@@ -17,7 +16,6 @@ from typing import (
     Type,
     TypeVar,
     Coroutine,
-    Awaitable,
     Callable
 )
 
@@ -58,6 +56,9 @@ class AIORedisItem(AIOStorageItem):
             for key, index in enumerate(cls.Meta.table.split(KEYS_DELIMITER))
             if index.startswith("{") and index.endswith("}")
         }
+        for param in cls._keys_positions.keys():
+            if param in cls.__annotations__:
+                del cls.__annotations__[param]
         # Аргумент, который используется для дальнейшей проверки и работы
         if hasattr(cls.Meta, "frame_size"):
             setattr(cls, "_frame_size", cls.Meta.frame_size)

@@ -1,6 +1,7 @@
 from typing import Union
 import asyncio
 
+from aiostorage_orm import AIOStorageORM
 from aiostorage_orm import AIORedisORM
 from aiostorage_orm import AIORedisItem
 from aiostorage_orm import OperationResult
@@ -19,7 +20,7 @@ class ExampleItem(AIORedisItem):
 
 async def main():
     # Во время первого подключения устанавливается глобальное подключение к Redis
-    orm: AIORedisORM = AIORedisORM(host="localhost", port=6379)
+    orm: AIOStorageORM = AIORedisORM(host="localhost", port=6379)
     await orm.init()
 
     # Создание единичной записи
