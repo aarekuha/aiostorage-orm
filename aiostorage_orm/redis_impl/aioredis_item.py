@@ -391,9 +391,9 @@ class AIORedisItem(AIOStorageItem):
 
     async def save(self) -> OperationResult:
         """ Одиночная вставка """
-        if not self._db_instance or not await self._is_connected(db_instance=self._db_instance):
-            raise Exception("Redis database not connected...")
         try:
+            if not self._db_instance or not await self._is_connected(db_instance=self._db_instance):
+                raise Exception("Redis database not connected...")
             for key, value in self.mapping.items():
                 expiration: Union[int, None] = self._ttl if hasattr(self, "_ttl") else None
                 await self._db_instance.set(name=key, value=value, ex=expiration)
@@ -405,12 +405,10 @@ class AIORedisItem(AIOStorageItem):
             )
 
     async def delete(self) -> OperationResult:
-        """
-            Удаление одного элемента
-        """
-        if not self._db_instance or not await self._is_connected(db_instance=self._db_instance):
-            raise Exception("Redis database not connected...")
+        """ Удаление одного элемента """
         try:
+            if not self._db_instance or not await self._is_connected(db_instance=self._db_instance):
+                raise Exception("Redis database not connected...")
             await self._db_instance.delete(*[key for key in self.mapping.keys()])
             return OperationResult(status=OperationStatus.success)
         except Exception as exception:

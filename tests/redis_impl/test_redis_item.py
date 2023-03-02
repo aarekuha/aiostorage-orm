@@ -128,12 +128,10 @@ def test_using_when_defined(test_item: AIORedisItem, monkeypatch: MonkeyPatch) -
 async def test_save_when_instance_not_defined(test_item: AIORedisItem) -> None:
     """
         Сохранение объекта в БД.
-        Определение исключения при попытке сохранения до установки подключения
+        Определение отсутствия положительного результата выполнения операции при попытке сохранения
     """
-    with pytest.raises(Exception) as exception:
-        await test_item.save()
-
-    assert "not connected" in str(exception.value)
+    operation_result = await test_item.save()
+    assert not operation_result.ok
 
 
 @pytest.mark.asyncio
