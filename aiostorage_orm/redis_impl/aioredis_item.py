@@ -243,35 +243,44 @@ class AIORedisItem(AIOStorageItem):
         return True
 
     @classmethod
+    def _get_src_values_for_meta(cls: Type[T], table: str) -> dict:
+        """ Получение значений данных Meta класса"""
+        src_values_for_meta: dict = dict()
+        src_values: list[str] = table.split(".")
+        for key, position in cls._keys_positions.items():
+            src_values_for_meta[key] = int(src_values[position])
+        return src_values_for_meta
+
+    @classmethod
     def _objects_from_db_items(cls: Type[T], items: dict[bytes, bytes]) -> list[T]:
-        """ Формирование cls(AIORedisItem)-объектов из данных базы """
-        # Подготовка базовых данных для формирования объектов из ключей
-        #   (уникальные ключи, без имён полей)
-        tables: set[str] = {
-            str(key).rsplit(KEYS_DELIMITER, 1)[0]
-            for key in items.keys()
-        }
-        result_items: list[T] = []
-        for table in tables:
-            # Отбор полей с префиксом текущей table
-            fields_src: list[bytes] = list(
-                filter(lambda item: str(item).startswith(table), items)
-            )
-            if cls._all_fields_is_empty(items=items, fields=fields_src):
+        """ Формирование cls(RedisItem)-объектов из данных базы """
+        class_fields: dict = {}
+        for redis_key, src_value in items.items():
+            # Определение имени таблицы (без имени поля)
+            table = redis_key.decode().rsplit(KEYS_DELIMITER, 1)[0]
+            # Определение имени поля
+            field_name = redis_key.decode().rsplit(KEYS_DELIMITER, 1)[1]
+
+            if cls._all_fields_is_empty(items=items, fields=[redis_key]):
                 continue
-            fields: dict[str, Any] = {}
-            for field in fields_src:
-                # Формирование атрибутов объекта из присутствующих полей
-                key: str = field.decode().rsplit(KEYS_DELIMITER, 1)[1]
-                fields[key] = pickle.loads(items[field])
 
-            # Формирование Meta из table класса и префикса полученных данных
-            table_args: dict = {}
-            src_values: list[str] = table.split('.')
-            for key, position in cls._keys_positions.items():
-                table_args[key] = src_values[position]
+            # Подготовка базовых данных для формирования объекта
+            if not class_fields.get(table):
+                class_fields[table] = {
+                    field_name: pickle.loads(src_value)
+                }
+            else:
+                class_fields[table] |= {
+                    field_name: pickle.loads(src_value)
+                }
 
-            result_items.append(cls(**(fields | table_args)))
+        result_items = []
+        for table, class_args in class_fields.items():
+            src_values_for_meta: dict = cls._get_src_values_for_meta(table=table)
+
+            result_items.append(
+                cls(**(class_args | src_values_for_meta))
+            )
 
         return result_items
 
