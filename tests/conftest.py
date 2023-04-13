@@ -37,8 +37,8 @@ def test_item(test_input_dict: dict) -> AIORedisItem:
 def test_input_dict() -> dict[str, Union[str, bytes, float, int]]:
     """ Тестовый словарь """
     return {
-        "param1": "param_value_1",
-        "param2": "param_value_2",
+        "param1": 2,
+        "param2": 4,
         "attr1": "attr_value_1",  # str
         "attr2": 19,  # int
         "attr3": 99.9,  # float
