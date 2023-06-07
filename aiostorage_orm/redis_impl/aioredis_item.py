@@ -60,9 +60,11 @@ class AIORedisItem(AIOStorageItem):
         for param in cls._keys_positions.keys():
             if param in cls.__annotations__:
                 del cls.__annotations__[param]
-        # Аргумент, который используется для дальнейшей проверки и работы
+        # Аргументы, которые используются для дальнейшей проверки и работы
         if hasattr(cls.Meta, "frame_size"):
             setattr(cls, "_frame_size", cls.Meta.frame_size)
+        if hasattr(cls.Meta, "ttl") and cls.Meta.ttl:
+            setattr(cls, "_ttl", cls.Meta.ttl)
 
     @classmethod
     def _make_kwargs_from_objects(cls: Type[T], objects: list[T]) -> dict:
