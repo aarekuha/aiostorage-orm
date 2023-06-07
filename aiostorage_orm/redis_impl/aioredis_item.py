@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 import copy
+import uuid
 import pickle
 from contextlib import suppress
 
@@ -248,7 +249,10 @@ class AIORedisItem(AIOStorageItem):
         src_values_for_meta: dict = dict()
         src_values: list[str] = table.split(".")
         for key, position in cls._keys_positions.items():
-            src_values_for_meta[key] = int(src_values[position])
+            if len(src_values[position]) == 36:  # UUID
+                src_values_for_meta[key] = uuid.UUID(src_values[position])
+            else:  # int
+                src_values_for_meta[key] = int(src_values[position])
         return src_values_for_meta
 
     @classmethod
