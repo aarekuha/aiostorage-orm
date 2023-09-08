@@ -136,10 +136,7 @@ class AIORedisItem(AIOStorageItem):
         self.using = self.instance_using  # type: ignore
 
     def __getattr__(self, attr_name: str):
-        try:
-            return self._params[attr_name]
-        except KeyError:
-            return object.__getattribute__(self, attr_name)
+        return object.__getattribute__(self, attr_name)
 
     @classmethod
     def _set_global_instance(cls: Type[T], db_instance: redis.Redis) -> None:
@@ -269,18 +266,15 @@ class AIORedisItem(AIOStorageItem):
             table = redis_key.decode().rsplit(KEYS_DELIMITER, 1)[0]
             # Определение имени поля
             field_name = redis_key.decode().rsplit(KEYS_DELIMITER, 1)[1]
-
-            if cls._all_fields_is_empty(items=items, fields=[redis_key]):
-                continue
-
+            value = pickle.loads(src_value) if src_value is not None else None
             # Подготовка базовых данных для формирования объекта
             if not class_fields.get(table):
                 class_fields[table] = {
-                    field_name: pickle.loads(src_value)
+                    field_name: value
                 }
             else:
                 class_fields[table] |= {
-                    field_name: pickle.loads(src_value)
+                    field_name: value
                 }
 
         result_items = []
