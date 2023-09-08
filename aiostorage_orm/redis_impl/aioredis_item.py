@@ -136,7 +136,10 @@ class AIORedisItem(AIOStorageItem):
         self.using = self.instance_using  # type: ignore
 
     def __getattr__(self, attr_name: str):
-        return object.__getattribute__(self, attr_name)
+        try:
+            return self._params[attr_name]
+        except KeyError:
+            return object.__getattribute__(self, attr_name)
 
     @classmethod
     def _set_global_instance(cls: Type[T], db_instance: redis.Redis) -> None:
