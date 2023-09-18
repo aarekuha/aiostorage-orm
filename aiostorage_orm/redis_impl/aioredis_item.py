@@ -138,6 +138,11 @@ class AIORedisItem(AIOStorageItem):
     def __getattr__(self, attr_name: str):
         return object.__getattribute__(self, attr_name)
 
+    def __setattr__(self, attr_name: str, value: Any):
+        if hasattr(self, "_params") and attr_name in self._params:
+            self._params[attr_name] = value  # type: ignore
+        return super().__setattr__(attr_name, value)
+
     @classmethod
     def _set_global_instance(cls: Type[T], db_instance: redis.Redis) -> None:
         """ Установка глобальной ссылки на БД во время первого подключения """
